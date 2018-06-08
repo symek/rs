@@ -1,22 +1,29 @@
+#!/usr/local/bin/python
 #!/opt/local/bin/python2
-#!/usr/bin/python
-import os, time, sys
+import os, time, sys, re
 from multiprocessing import Process
+import threading
 from optparse import OptionParser
-import sys
+
 
 RS_EXECUTE_REMOTE = False
 
 try:
-    from paramiko import client
+    import rpyc
     RS_EXECUTE_REMOTE = os.getenv("RS_EXECUTE_REMOTE", False)
-    print "RS_EXECUTE_REMOTE: ", RS_EXECUTE_REMOTE
 except:
-    print "Can't import paramiko. No remote execution will take place."
+    print "Can't import rpyc. No remote execution will take place."
 
+print "RS_EXECUTE_REMOTE:", bool(RS_EXECUTE_REMOTE)
 # ENV controling our behaviour
 RS_REMOTE_HOST    = os.getenv("RS_REMOTE_HOST", "10.20.6.217")
 RS_USER_NAME      = os.getenv("RS_USER_NAME",   "pi")
+RPYC_PORT         = os.getenv("RPYC", 55653)
+
+if RS_EXECUTE_REMOTE:
+    print "Host: " + RS_REMOTE_HOST
+    print "User: " + RS_USER_NAME
+    print "port: " + str(RPYC_PORT) 
 
 
 # Command line patterns
@@ -53,8 +60,8 @@ def parseOptions(argv):
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
-
-# Class handing ssh connection.
+# Class handing ssh connection with paramiko
+# Not in use atm.
 class SSHClient:
     """Sends a single command to the remote host.
        Looks for ssh keys. 
@@ -62,15 +69,21 @@ class SSHClient:
     client = None
     
     def __init__(self, address, username, password):
+        import paramiko
         print("Connecting to server.")
-        self.client = client.SSHClient()
+        self.client = paramiko.client.SSHClient()
         self.address = address
         self.username = username
         self.password = password
         self.client.set_missing_host_key_policy(client.AutoAddPolicy())
         self.client.connect(address, username=username, password=password, look_for_keys=True)
+
+    def __del__(self):
+        self.client.close()
+
  
     def send_command(self, command):
+        """Sends command without running shell."""
         if(self.client):
             stdin, stdout, stderr = self.client.exec_command(command)
             while not stdout.channel.exit_status_ready():
@@ -135,7 +148,7 @@ def open_pipe_ssh(command, verbose=True):
         Command: list of words in shell command.
     """
     import subprocess
-    HOST = 'pi@192.168.1.50'
+    HOST = RS_REMOTE_HOST
     COMMAND = " ".join(command)
     ssh = subprocess.Popen(["ssh", "-t", "-t", "%s" % HOST, COMMAND],
                        shell=True,
@@ -145,7 +158,7 @@ def open_pipe_ssh(command, verbose=True):
     error  = ssh.stderr.readlines()
     return result, error
 
-def open_pipe_ssh2(command, verbose=True):
+def open_pipe_paramiko(command, verbose=True):
     """ Executes command remotly via paramiko 
         Command: list of words in shell command.
     """
@@ -159,17 +172,35 @@ def open_pipe_ssh2(command, verbose=True):
     result, error = client.send_command(ssh_command)
     return result, error
 
-def open_pipe(command, verbose=True, ssh=RS_EXECUTE_REMOTE):
+
+def open_pipe_rpyc(command, verbose=True):
+    """RPyc take on remote execution."""
+    assert 'rpyc' in globals()
+    r_command = " ".join(command)
+    connection = rpyc.classic.connect(RS_REMOTE_HOST, port=RPYC_PORT)
+    return connection.modules.os.system(r_command)
+
+def open_pipe_remote(command, verbose=True):
+    """"""
+    # return open_pipe_ssh(command, verbose)
+    # return open_pipe_paramiko(command, verbose)
+    return open_pipe_rpyc(command, verbose)
+
+
+def open_pipe(command, verbose=True, remote=RS_EXECUTE_REMOTE):
     """ Executes command in subshell. 
         Command: list of words in shell command. 
     """
     from subprocess import Popen, PIPE 
+    exec_mode = " (localy)"
+    if remote:
+        exec_mode = " (remotely: %s)" % RS_REMOTE_HOST
     if verbose:
         print "Command: ", 
-        print " ".join(command)
+        print " ".join(command) + exec_mode
 
-    if ssh:
-        return open_pipe_ssh2(command)
+    if remote:
+        return open_pipe_remote(command, verbose)
 
     o, e =  Popen(command, shell=False, 
                 stdout=PIPE, stderr=PIPE, 
