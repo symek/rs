@@ -70,7 +70,8 @@ def parseOptions(argv):
     parser.add_option("",   "--execute",    dest="execute", action="store", type='string', default=None,   help="Executes arbitrary command.")
     parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
     parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
-    parser.add_option("-u", "--upload",     dest="upload",   action="store", type='string', default=None,   help="Upload the iage to internetn account (Dropbox). ")
+    parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
+    parser.add_option("-u", "--upload",     dest="upload",   action="store_true", type='string', default=None,   help="Upload the image to internet account (Dropbox). ")
         
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
@@ -474,6 +475,9 @@ def main():
         if opts.download:
             o, e = rsync(opts.capture)
             show_image(opts.capture)
+        elif opts.upload:
+            command = ["./rs", "-U", opts.capture]
+            open_pipe(command, remote=RS_EXECUTE_REMOTE)
         else:
             # Download just embedded jpg from a raw footage.
             file_, ext = os.path.splitext(opts.capture)
@@ -493,8 +497,8 @@ def main():
     if opts.sync:
         sync_images()
 
-    if opts.upload:
-        upload_to_dropbox(opts.upload)
+    if opts.upload_file:
+        upload_to_dropbox(opts.upload_file)
 
 
 
