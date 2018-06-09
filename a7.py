@@ -26,8 +26,21 @@ if RS_EXECUTE_REMOTE:
     print "port: " + str(RPYC_PORT) 
 
 
+RS_DROPBOX_AVAIABLE = False
+RS_DROPBOX_ACCESS_TOKEN = "WW-HJbGm1E4AAAAAAAARz8mU2nGfZv0YNqZGVvmm2PBxQuHAcZ6a7RH2J1ER31_l"
+
+try:
+    import dropbox
+    from dropbox.files import WriteMode
+    from dropbox.exceptions import ApiError, AuthError
+    RS_DROPBOX_AVAIABLE = True
+except:
+    pass
+
+
+
 # Command line patterns
-GPHOTO_SHOW_PREVIEW = "gphoto2 --show-preview --force-overwrite"
+GPHOTO_MAKE_PREVIEW = "gphoto2 --show-preview --force-overwrite --filename %s"
 GPHOTO_CAPTURE_DOWN = "gphoto2 --capture-image-and-download --force-overwrite --filename %s"
 GPHOTO_SET_ISO      = "gphoto2 --set-config iso=%s"
 GPHOTO_SET_FSTOPS   = "gphoto2 --set-config f-number=%s"
@@ -43,9 +56,9 @@ def parseOptions(argv):
 
 
     #Options:
-    parser.add_option("-m", "--move",       dest="move",    action="store",  default=None,  help="Move head.")
-    parser.add_option("-c", "--capture",    dest="capture", action="store",  default=None,  help="Capture an image")
-    parser.add_option("-p", "--preview",    dest="preview", action="store_true",   default=False, help="Preview an image")
+    parser.add_option("-m", "--move",       dest="move",    action="store",   default=None,  help="Move head.")
+    parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
+    parser.add_option("-p", "--preview",    dest="preview", action="store",   default=0,     help="Preview an image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
     parser.add_option("-s", "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
     parser.add_option("-f", "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
@@ -55,8 +68,10 @@ def parseOptions(argv):
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
     parser.add_option("",   "--set-config", dest="config",  action="store", default=None,                   help="Sets various camera settings.")
     parser.add_option("",   "--execute",    dest="execute", action="store", type='string', default=None,   help="Executes arbitrary command.")
-    # parser.add_option("",   "--proxy",   dest="proxy",   action="store_true", default=False, help="Convert textures to jpeg proxies (2048x2048).")
-    # parser.add_option("",   "--scale",   dest="scale",   action="store",      default=1,     help="Scale factor (default x1")
+    parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
+    parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
+    parser.add_option("-u", "--upload",     dest="upload",   action="store", type='string', default=None,   help="Upload the iage to internetn account (Dropbox). ")
+        
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -104,7 +119,37 @@ class SSHClient:
              print("Connection not opened: %s, %s, %s" % (self.address, self.username, self.password))
         return None, None
 
+def upload_to_dropbox(filename):
+    """Upload file to the dropbox using access token.
+    """
+    import os.path
 
+    if filename.startswith("./"):
+        filename = filename[2:]
+
+    absfilename = os.path.join("/", filename)
+
+    dbx = dropbox.Dropbox(RS_DROPBOX_ACCESS_TOKEN)
+    with open(filename, 'rb') as f:
+        # We use WriteMode=overwrite to make sure that the settings in the file
+        # are changed on upload
+        print("Uploading " + filename  + " to Dropbox as " + filename + "...")
+        try:
+            dbx.files_upload(f.read(), absfilename, mode=WriteMode('overwrite'))
+        except ApiError as err:
+            # This checks for the specific error where a user doesn't have
+            # enough Dropbox space quota to upload this file
+            if (err.error.is_path() and
+                    err.error.get_path().reason.is_insufficient_space()):
+                sys.exit("ERROR: Cannot back up; insufficient space.")
+            elif err.user_message_text:
+                print(err.user_message_text)
+                return None
+            else:
+                print(err)
+                return None
+
+    return True
 
 
 def clamp(x, m=-1023, M=1023):
@@ -184,7 +229,14 @@ def open_pipe_remote(command, verbose=True):
     """"""
     # return open_pipe_ssh(command, verbose)
     # return open_pipe_paramiko(command, verbose)
-    return open_pipe_rpyc(command, verbose)
+    code = open_pipe_rpyc(command, verbose)
+    return str(code), None
+
+def rsync(filename):
+    """Use rsync to retrive file from remote host."""
+    command =["rsync", "-va", "--progress", "%s@%s:~/sony7iii/%s" % (RS_USER_NAME, RS_REMOTE_HOST, filename), filename] 
+
+    return open_pipe(command, remote=False)
 
 
 def open_pipe(command, verbose=True, remote=RS_EXECUTE_REMOTE):
@@ -210,19 +262,40 @@ def open_pipe(command, verbose=True, remote=RS_EXECUTE_REMOTE):
     if e: print e
     return o, e
 
-def show_preview(filename="capture_preview.jpg", refresh=False, rotate=0, resize=1):
+def show_image(filename, refresh=False, rotate=0, resize=1):
     from sys import platform
-    print make_preview(filename)
-    if platform == "darwin":
-        return open_pipe(['open', filename])
-    elif platform == "linux2":
-        print open_pipe(['oiiotool', filename, "--rotate", str(rotate), "--resize", "%s" % str(resize*100),  '-o', filename])
-        return open_pipe(['feh', filename])
+
+    if not RS_EXECUTE_REMOTE:    
+        if platform == "darwin":
+            return open_pipe(['open', filename])
+        elif platform == "linux2":
+            print open_pipe(['oiiotool', filename, "--rotate", str(rotate), 
+                "--resize", "%s" % str(resize*100),  '-o', filename])
+            return open_pipe(['feh', filename])
+    else:
+        if platform == "darwin":
+            command = ["open", filename]
+        elif platform == "linux2":
+            command = ['xdg-open', filename]
+        return open_pipe(command, remote=False)
+
+
+def sync_images():
+    command = ["./sync",]
+    o, e = open_pipe(command, remote=False)
+    return o, e
 
 def make_preview(filename):
-    command = GPHOTO_SHOW_PREVIEW.split()
+    command = GPHOTO_MAKE_PREVIEW % filename
+    command = command.split()
     out, err = open_pipe(command)
     return out, err
+
+def make_preview_from_raw(filename):
+    command = "ufraw-batch --overwrite --embedded-image \
+        --out-type=jpg --shrink=2 %s" % filename
+    command = command.split()
+    return open_pipe(command)
 
 def list_config(item=None):
     config, err = open_pipe(['gphoto2', '--list-config'])
@@ -263,14 +336,13 @@ def set_fstop(fstop):
     return set_config("f-number", str(fstop))
 
 
-def capture_and_download(filename, preview=False):
+def capture_and_download_to_PI(filename):
     """ Capture and download photo.
     """
     command = GPHOTO_CAPTURE_DOWN % filename
     command = command.split()
-    o, e  = open_pipe(command)
-    if not e and preview:
-        show_preview(filename)
+    return open_pipe(command)
+    
 
 def capture_movie(time=10):
     """ Capture 'time' length video.
@@ -327,11 +399,19 @@ def get_current(config):
         if line[0] == "Current":
             return line[1].strip()
 
+def auto_name_image(prefix=None, postfix=None):
+    import datetime, os
+    now = datetime.datetime.now().isoformat()
+    folder, file_ = now.split("T")
+    return os.path.join(prefix, folder, file_ + postfix)
 
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
     """
     opts, args, parser = parseOptions(sys.argv[1:])
+
+    if opts.capture == "auto":
+        opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
    
 
     # CLI.
@@ -365,13 +445,42 @@ def main():
 
     # Preview:
     if opts.preview and not opts.capture:
-        show_preview(rotate=opts.rotate, resize=opts.resize)
+        preview_number = opts.preview.split(",")
+        # Single preview means do and show: 
+        if len(preview_number) == 1:
+            stupid_filename = "./images/preview_%s.jpg" % opts.preview
+            real_filename   = "./images/thumb_preview_%s.jpg" % opts.preview
+            out, err = make_preview(stupid_filename)
+            if err:
+                print "WARNING: Can't make new preview. Outdated image!!!"
+            out, err = rsync(real_filename)
+            print out
+            show_image(real_filename, rotate=opts.rotate, resize=opts.resize)
+        else:
+            #We allow showiong more then one preview, if it's alread was taken:
+            files = []
+            for image in preview_number:
+                files += ['images/thumb_preview_%s.jpg' % image]
+            files = " ".join(files)
+            show_image(files, rotate=0, resize=1)
+
 
     # Capture the image:
-    if opts.capture and not opts.preview:
-        capture_and_download(opts.capture, False)
-    elif opts.capture and opts.preview:
-        capture_and_download(opts.capture, True)
+    if opts.capture:
+        o, e = capture_and_download_to_PI(opts.capture)
+        print o, e
+        e, o = make_preview_from_raw(opts.capture)
+        print o, e
+        if opts.download:
+            o, e = rsync(opts.capture)
+            show_image(opts.capture)
+        else:
+            # Download just embedded jpg from a raw footage.
+            file_, ext = os.path.splitext(opts.capture)
+            preview    = file_ + ".embedded" + ".jpg"
+            o, e = rsync(preview)
+            show_image(preview, rotate=0, resize=1)
+        
 
     # Record video: 
     if opts.movie:
@@ -379,6 +488,13 @@ def main():
 
     if opts.panorama:
         pano_detail = compute_panorama()
+
+
+    if opts.sync:
+        sync_images()
+
+    if opts.upload:
+        upload_to_dropbox(opts.upload)
 
 
 
