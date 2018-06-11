@@ -71,7 +71,7 @@ def parseOptions(argv):
     parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
     parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
-    parser.add_option("-u", "--upload",     dest="upload",   action="store_true", type='string', default=None,   help="Upload the image to internet account (Dropbox). ")
+    parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
         
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
@@ -478,7 +478,7 @@ def main():
         elif opts.upload:
             command = ["./rs", "-U", opts.capture]
             open_pipe(command, remote=RS_EXECUTE_REMOTE)
-        else:
+        else:   
             # Download just embedded jpg from a raw footage.
             file_, ext = os.path.splitext(opts.capture)
             preview    = file_ + ".embedded" + ".jpg"
