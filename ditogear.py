@@ -6,16 +6,16 @@ import time
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
     OUT = None
-    LOW = None
-    HIGH = None
+    LOW = False
+    HIGH = True
     BCM = None
 
     def setmode(self, mode):
         pass
     def setup(self, pin, mode):
         pass
-    def output(self, v):
-        pass
+    def output(self, pin, v):
+        print pin, v
     def cleanup(self):
         pass
 
@@ -57,17 +57,17 @@ class DitoGear(object):
         for pin in self.pins:
             GPIO.setup(pin.number, GPIO.OUT)
 
-    def rotate(axe, angle):
+    def rotate(self, axe, angle):
         """
         """
-        range_ = self.ange * abs(angle)
+        range_ = self.angle * abs(angle)
         if angle < 0: sign = GPIO.HIGH
         else: sign = GPIO.LOW
 
         assert axe in self.axis
         GPIO.output(self.axis[axe][1], sign)
 
-        for step in range(range_):
+        for step in range(int(range_)):
             sleep = 0.000001
             GPIO.output(self.axis[axe][0], GPIO.HIGH)
             time.sleep(sleep)
@@ -90,6 +90,7 @@ def main():
     dg = DitoGear()
     print dg
     print  dg.pins
+    dg.rotate('y', 10)
 
     # if len (sys.argv) < 7 :
     #     print "Usage: script direc #steps"
