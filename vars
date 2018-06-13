@@ -1,0 +1,3 @@
+export RS_ROOT=`pwd`
+export RS_IMAGES=${RS_ROOT}/images
+export PATH=$PATH:${RS_ROOT}/bin
