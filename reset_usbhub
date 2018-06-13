@@ -1,0 +1,2 @@
+#!/bin/bash
+~/uhubctl/uhubctl -R -a 2 -p 1
