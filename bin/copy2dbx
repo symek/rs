@@ -9,7 +9,7 @@ dbx_token = os.getenv("RS_DROPBOX_ACCESS_TOKEN", None)
 
 if not dbx_token:
     try:
-        with open("./scripts/.dbxkey") as key:
+        with open("./.dbxkey") as key:
             lines = key.readlines()
             for line in lines:
                 if line.startswith("RS_DROPBOX_ACCESS_TOKEN"):
@@ -51,6 +51,7 @@ def upload_to_dropbox(filename):
 
 def main():
     if len(sys.argv) < 2:
+        print "$program filename"
         return 1
 
     filenames = sys.argv[1:]
