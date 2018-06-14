@@ -82,7 +82,7 @@ class Rig(object):
         else: sign = GPIO.LOW
 
         assert axe in self.axis
-        GPIO.output(self.axis[axe][1], sign)
+        GPIO.output(self.axis[axe][1].number, sign)
 
         for step in range(int(range_)):
             sleep = 0.000001
