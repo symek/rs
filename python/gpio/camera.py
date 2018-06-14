@@ -17,13 +17,18 @@ class GPIOClass(object):
     def cleanup(self):
         pass
 
+# For testing purposes:
 try:
     import RPi.GPIO as GPIO
 except:
     print "Can't find GPIO module. Using dummy one..."
     GPIO = GPIOClass()
 
+
 class Camera(object):
+    """ Basic class implementing switching camera ON/OFF 
+        via lanc cabale connected to RPi pin.
+    """
     logfilename = "/tmp/gpio.camera.json"
     log = {'state':"ON", "events":[]}
     camera_pin  = 17
