@@ -46,8 +46,7 @@ class Rig(object):
             Pin("z_pulse",     13),
             Pin("z_direct",    19),
             Pin("zoom_pulse",  12),
-            Pin("zoom_direct", 16),
-            Pin("dito_power", None)]
+            Pin("zoom_direct", 16)]
     axis  = {'y':    (pins[0], pins[1]), 
              'z':    (pins[2], pins[3]), 
              'zoom': (pins[4], pins[5])}
