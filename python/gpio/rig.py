@@ -86,9 +86,9 @@ class Rig(object):
 
         for step in range(int(range_)):
             sleep = 0.000001
-            GPIO.output(self.axis[axe][0], GPIO.HIGH)
+            GPIO.output(self.axis[axe][0].number, GPIO.HIGH)
             time.sleep(sleep)
-            GPIO.output(self.axis[axe][0], GPIO.LOW)
+            GPIO.output(self.axis[axe][0].number, GPIO.LOW)
             time.sleep(sleep)
 
         nowiso = datetime.datetime.now().replace(microsecond=0).isoformat()
