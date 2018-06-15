@@ -1,5 +1,4 @@
 #!/usr/local/bin/python
-#!/opt/local/bin/python2
 import os, time, sys, re
 from multiprocessing import Process
 import threading
