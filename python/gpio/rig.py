@@ -1,6 +1,9 @@
 import sys, os, json
 import time, datetime
 
+DEFAULT_POWER = 1
+RESCUE_MODE   = 0
+
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
     OUT = None
@@ -17,12 +20,35 @@ class GPIOClass(object):
     def cleanup(self):
         pass
 
+class PiJuiceClass(object):
+    class Status(object):
+        def SetIoDigitalOutput(self, p, v):
+            return True
+        def getStatus(self):
+            return {}
+        def GetIoDigitalInput(self, p):
+            return True
+
+    def __init__(self, x, y):
+        self.status = PiJuiceClass.Status()
+
+
 try:
     import RPi.GPIO as GPIO
 except:
-    print "Can't find GPIO module. Exiting now."
+    print "Can't find GPIO module. Using dummy one..."
     # sys.exit()
     GPIO = GPIOClass()
+
+
+try:
+    from pijuice import PiJuice # Import pijuice module
+except:
+    print "Cant' find pijuice module. Using dummy one..."
+    PiJuice = PiJuiceClass
+
+# Instantiate PiJuice interface object
+pijuice = PiJuice(1, 0x14) 
 
 class Pin(object):
     name   = None
@@ -95,6 +121,27 @@ class Rig(object):
         self.log['events'] += [{axe: angle, 'date': nowiso}]
         self.log['state'][axe] += angle
         self._update_log()
+
+    def get_power_status(self):
+        return pijuice.status.GetStatus() # Read PiJuice staus.
+
+    def turn_on(self):
+
+        #turn on 12V (ramie)
+        print pijuice.status.GetIoDigitalInput(1)
+        print pijuice.status.SetIoDigitalOutput(1, 1)
+
+    def turn_off(self):
+        #turn off 12V
+        print pijuice.status.GetIoDigitalInput(1)
+        print pijuice.status.SetIoDigitalOutput(1, 0)
+        print pijuice.status.GetIoDigitalInput(1)
+
+    def force_rescue_power(self, value=RESCUE_MODE):
+        #force select solar (0 - ratunek dla raspberry, 1 - default)
+        print pijuice.status.GetIoDigitalInput(2)
+        print pijuice.status.SetIoDigitalOutput(2, value)
+        print pijuice.status.GetIoDigitalInput(2)
 
     def __del__(self):
         GPIO.cleanup()
