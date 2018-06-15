@@ -103,9 +103,12 @@ class Rig(object):
     def rotate(self, axe, angle):
         """
         """
-        range_ = self.angle * abs(angle)+abs(angle)*.05
-        if angle < 0: sign = GPIO.HIGH
-        else: sign = GPIO.LOW
+        range_ = self.angle * abs(angle)
+        range_ = range_ + self.angle*abs(angle)*.00733333333
+        if angle < 0: 
+            sign = GPIO.HIGH
+        else: 
+            sign = GPIO.LOW
 
         assert axe in self.axis
         GPIO.output(self.axis[axe][1].number, sign)
