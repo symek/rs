@@ -66,7 +66,7 @@ class Rig(object):
     """ Class for controling DitoGear camera rig and Len driver via
         GPIO pins on RPi.
     """
-    angle = 485.3333333333333
+    angle = 485.333333333333333333
     pins  =[Pin("y_pulse",     5),
             Pin("y_direct",    6),
             Pin("z_pulse",     13),
@@ -103,7 +103,7 @@ class Rig(object):
     def rotate(self, axe, angle):
         """
         """
-        range_ = self.angle * abs(angle)
+        range_ = self.angle * abs(angle)+abs(angle)*.05
         if angle < 0: sign = GPIO.HIGH
         else: sign = GPIO.LOW
 
