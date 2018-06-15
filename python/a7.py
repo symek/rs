@@ -8,6 +8,12 @@ from optparse import OptionParser
 
 RS_EXECUTE_REMOTE = False
 
+
+RS_IMAGES = os.getenv("RS_IMAGES", None)
+if not RS_IMAGES:
+    print "Can't work without RS_IMAGES env var. Quiting now."
+    sys.exit()
+
 try:
     import rpyc
     RS_EXECUTE_REMOTE = os.getenv("RS_EXECUTE_REMOTE", False)
@@ -445,25 +451,13 @@ def main():
         move_head(*accel)
 
     # Preview:
-    if opts.preview and not opts.capture:
-        preview_number = opts.preview.split(",")
-        # Single preview means do and show: 
-        if len(preview_number) == 1:
-            stupid_filename = "./images/preview_%s.jpg" % opts.preview
-            real_filename   = "./images/thumb_preview_%s.jpg" % opts.preview
-            out, err = make_preview(stupid_filename)
-            if err:
-                print "WARNING: Can't make new preview. Outdated image!!!"
-            out, err = rsync(real_filename)
-            print out
-            show_image(real_filename, rotate=opts.rotate, resize=opts.resize)
-        else:
-            #We allow showiong more then one preview, if it's alread was taken:
-            files = []
-            for image in preview_number:
-                files += ['images/thumb_preview_%s.jpg' % image]
-            files = " ".join(files)
-            show_image(files, rotate=0, resize=1)
+    if opts.preview and not opts.capture: 
+        preview_filename = os.path.join(RS_IMAGES, "thumb_preview_%s.jpg" % opts.preview)
+        output, error    = make_preview(preview_filename)
+        if error:
+            print "WARNING: Can't make new preview. Outdated image!!!"
+            print error
+        print output
 
 
     # Capture the image:
