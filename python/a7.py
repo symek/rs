@@ -1,5 +1,4 @@
-#!/usr/local/bin/python
-#!/opt/local/bin/python2
+#!/usr/bin/python
 import os, time, sys, re
 from multiprocessing import Process
 import threading
@@ -7,12 +6,16 @@ from optparse import OptionParser
 
 
 RS_EXECUTE_REMOTE = False
+RS_XFORWARD = os.getenv("DISPLAY", None)
+if not RS_XFORWARD:
+    print "Warning! No X forwarding will take place."
 
 
 RS_IMAGES = os.getenv("RS_IMAGES", None)
 if not RS_IMAGES:
-    print "Can't work without RS_IMAGES env var. Quiting now."
+    print "Error! Can't work without RS_IMAGES env var. Quiting now."
     sys.exit()
+
 
 try:
     import rpyc
@@ -64,9 +67,10 @@ def parseOptions(argv):
     #Options:
     parser.add_option("-m", "--move",       dest="move",    action="store",   default=None,  help="Move head.")
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
-    parser.add_option("-p", "--preview",    dest="preview", action="store",   default=0,     help="Preview an image")
+    parser.add_option("-p", "--preview",    dest="preview", action="store",   default=None,  help="Make preview image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
-    parser.add_option("-s", "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
+    parser.add_option("-s", "--show",       dest="show",    action="store",   default=None,  help="Show the image either by name or index.")
+    parser.add_option("",   "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
     parser.add_option("-f", "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
     parser.add_option("-i", "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
     parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image.")
@@ -269,16 +273,20 @@ def open_pipe(command, verbose=True, remote=RS_EXECUTE_REMOTE):
     if e: print e
     return o, e
 
-def show_image(filename, refresh=False, rotate=0, resize=1):
+def show_image(filename, console=False, rotate=0, resize=1.0):
     from sys import platform
 
     if not RS_EXECUTE_REMOTE:    
         if platform == "darwin":
             return open_pipe(['open', filename])
         elif platform == "linux2":
-            print open_pipe(['oiiotool', filename, "--rotate", str(rotate), 
-                "--resize", "%s" % str(resize*100),  '-o', filename])
-            return open_pipe(['feh', filename])
+            if rotate != 0 or resize != 1.0:
+                out, error = open_pipe(['oiiotool', filename, "--rotate", str(rotate), 
+                    "--resize", "%s" % str(resize*100),  '-o', filename])
+            if not console: 
+                return open_pipe(['feh', filename])
+            else:
+                return open_pipe(['tiv', filename])
     else:
         if platform == "darwin":
             command = ["open", filename]
@@ -452,13 +460,12 @@ def main():
 
     # Preview:
     if opts.preview and not opts.capture: 
-        preview_filename = os.path.join(RS_IMAGES, "thumb_preview_%s.jpg" % opts.preview)
+        preview_filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
         output, error    = make_preview(preview_filename)
         if error:
             print "WARNING: Can't make new preview. Outdated image!!!"
             print error
         print output
-
 
     # Capture the image:
     if opts.capture:
@@ -478,6 +485,16 @@ def main():
             preview    = file_ + ".embedded" + ".jpg"
             o, e = rsync(preview)
             show_image(preview, rotate=0, resize=1)
+
+
+    # Show the image:
+    if opts.show:
+        if opts.show.isdigit():
+            image_index = int(opts.show)
+            image_filename = None
+        else:
+            image_index = -1
+            image_filename = opts.show
         
 
     # Record video: 
