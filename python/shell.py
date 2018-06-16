@@ -46,7 +46,7 @@ class Executor(object):
         """Use rsync to retrive file from remote host.
         """
         command =["rsync", "-va", "--progress", "%s@%s:~/sony7iii/%s" \
-            % (RS_USER_NAME, RS_REMOTE_HOST, filename), filename] 
+            % (RS_USER_NAME, RS_REMOTE, filename), filename] 
 
         return open_pipe(command, remote=False)
 
@@ -58,7 +58,7 @@ class Executor(object):
         from subprocess import Popen, PIPE 
         exec_mode = " (localy)"
         if remote:
-            exec_mode = " (remotely: %s)" % RS_REMOTE_HOST
+            exec_mode = " (remotely: %s)" % RS_REMOTE
         if verbose:
             print "Command: ", 
             print " ".join(command) + exec_mode

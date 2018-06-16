@@ -153,7 +153,10 @@ def auto_name_image(prefix=None, postfix=None):
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
     """
+    # Command line
     opts, args, parser = parseOptions(sys.argv[1:])
+    # Camera setup
+    
 
     if opts.capture == "auto":
         opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
@@ -186,6 +189,7 @@ def main():
         for i in move_arg:
             accel += [int(i)]
         move_head(*accel)
+
 
     # Preview:
     if opts.preview and not opts.capture: 

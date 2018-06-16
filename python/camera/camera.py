@@ -1,5 +1,5 @@
 
-from utils import Executor
+from shell import Executor
 
 class Camera(object):
     GPHOTO_MAKE_PREVIEW = "gphoto2 --show-preview --force-overwrite --filename %s"
