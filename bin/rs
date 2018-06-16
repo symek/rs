@@ -160,6 +160,7 @@ def compute_hdri(fstops=5):
         set_fstop(current_fstop+1)
         capture_and_download(filename, 0)
 
+def get_current_extension():
 
 
 def auto_name_image(prefix=None, postfix=None):
@@ -184,6 +185,7 @@ def process_rig_arguments(args):
             print "Can't parse %s " % str(a)
             print "Ignoring it."
     return axies
+
 
 
 def main():
@@ -227,8 +229,12 @@ def main():
         name, value = items
         camera.set_config(name, value)
 
-    # if opts.capture == "auto":
-    #     opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
+    if opts.capture == "auto":
+        extension = '.jpg'
+        current_quality = camera.get_current_config('imagequality')
+        if current_quality in ('3', '4', '5', '6'):
+            extension = '.arw'
+        opts.capture = auto_name_image(prefix="./images/", postfix=extension)
 
     # Sets camera shooting properties:
     if opts.shutter:
