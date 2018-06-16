@@ -105,6 +105,7 @@ class Rig(object):
         """
         if self.turn_off_on_exit:
             self.turn_off()
+        GPIO.cleanup()
 
     def _update_log(self):
         with open(self.logfilename, 'w') as file:
@@ -142,22 +143,20 @@ class Rig(object):
     def turn_on(self):
 
         #turn on 12V (ramie)
-        print pijuice.status.GetIoDigitalInput(1)
-        print pijuice.status.SetIoDigitalOutput(1, 1)
+        pijuice.status.GetIoDigitalInput(1)
+        pijuice.status.SetIoDigitalOutput(1, 1)
 
     def turn_off(self):
         #turn off 12V
-        print pijuice.status.GetIoDigitalInput(1)
-        print pijuice.status.SetIoDigitalOutput(1, 0)
-        print pijuice.status.GetIoDigitalInput(1)
+        pijuice.status.GetIoDigitalInput(1)
+        pijuice.status.SetIoDigitalOutput(1, 0)
+        pijuice.status.GetIoDigitalInput(1)
 
     def force_rescue_power(self, value=RESCUE_MODE):
         #force select solar (0 - ratunek dla raspberry, 1 - default)
-        print pijuice.status.GetIoDigitalInput(2)
-        print pijuice.status.SetIoDigitalOutput(2, value)
-        print pijuice.status.GetIoDigitalInput(2)
+        pijuice.status.GetIoDigitalInput(2)
+        pijuice.status.SetIoDigitalOutput(2, value)
+        pijuice.status.GetIoDigitalInput(2)
 
-    def __del__(self):
-        GPIO.cleanup()
 
 
