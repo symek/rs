@@ -26,7 +26,7 @@ except:
 
 
 class Executor(object):
-    def open_pipe_rpyc(command, verbose=True):
+    def open_pipe_rpyc(shell, command, verbose=True):
         """RPyc take on remote execution.
         """
         assert 'rpyc' in globals()
@@ -34,7 +34,7 @@ class Executor(object):
         connection = rpyc.classic.connect(RS_REMOTE, port=RPYC_PORT)
         return connection.modules.os.system(r_command)
 
-    def open_pipe_remote(command, verbose=True):
+    def open_pipe_remote(self, command, verbose=True):
         """ Testing different approaches.
         """
         # return open_pipe_ssh(command, verbose)
@@ -42,7 +42,7 @@ class Executor(object):
         code = open_pipe_rpyc(command, verbose)
         return str(code), None
 
-    def rsync(filename):
+    def rsync(self, filename):
         """Use rsync to retrive file from remote host.
         """
         command =["rsync", "-va", "--progress", "%s@%s:~/sony7iii/%s" \
@@ -51,23 +51,22 @@ class Executor(object):
         return open_pipe(command, remote=False)
 
 
-    def open_pipe(command, verbose=True, remote=RS_REMOTE):
+    def open_pipe(self, command, verbose=True, remote=RS_REMOTE):
         """ Executes command in subshell. 
             Command: list of words in shell command. 
         """
         from subprocess import Popen, PIPE 
         exec_mode = " (localy)"
         if remote:
-            exec_mode = " (remotely: %s)" % RS_REMOTE
+            exec_mode = " (remotely: %s)" % str(RS_REMOTE)
         if verbose:
             print "Command: ", 
             print " ".join(command) + exec_mode
 
         if remote:
-            return open_pipe_remote(command, verbose)
+            return self.open_pipe_remote(command, verbose)
 
-        o, e =  Popen(command, shell=False, 
-                    stdout=PIPE, stderr=PIPE, 
+        o, e =  Popen(command, stdout=PIPE, stderr=PIPE, 
                     universal_newlines=True).communicate()
 
         if o: print o
