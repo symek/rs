@@ -126,14 +126,15 @@ def make_preview_from_raw(filename):
     command = command.split()
     return commander.open_pipe(command)
 
-def show_image_with_tiv(raw_filename):
+def show_image_with_tiv(filename, embedded=True):
     """
     """
     from shell import ShellCommander
     commander = ShellCommander(remote=RS_REMOTE)
-    file_, ext = os.path.splitext(raw_filename)
-    preview    = file_ + ".embedded" + ".jpg"
-    command = ['tiv', preview]
+    if embedded:
+        file_, ext = os.path.splitext(raw_filename)
+        filename    = file_ + ".embedded" + ".jpg"
+    command = ['tiv', filename]
     return commander.open_pipe(command)
 
 
@@ -268,7 +269,7 @@ def main():
             print error
         print output
         # Do something with an image being taken:
-        if opts.preview:
+        if opts.preview or opts.tiv:
             output,  error = make_preview_from_raw(opts.capture)
             if error:
                 print error
@@ -276,12 +277,12 @@ def main():
 
     if opts.tiv:
         if opts.capture:
-            filename = opts.capture
+            show_image_with_tiv(opts.capture)
         elif opts.preview:
             filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
-        show_image_with_tiv(filename)
+            show_image_with_tiv(filename, False)
 
-    
+
 
         # print o, e
         # if opts.download:
