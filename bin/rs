@@ -23,6 +23,19 @@ if not RS_IMAGES:
     print "Error! Can't work without RS_IMAGES env var. Quiting now."
     sys.exit()
 
+RS_REMOTE=None
+
+try:
+    import rpyc
+    RS_REMOTE    = os.getenv("RS_REMOTE",    None)
+    RS_USERNAME  = os.getenv("RS_USER_NAME", None)
+    RPYC_PORT    = os.getenv("RPYC",         55653)
+    print "RS_REMOTE: " + RS_REMOTE
+    print "User: " + RS_USER_NAME
+    print "port: " + str(RPYC_PORT) 
+except:
+    print "Can't import rpyc. No remote execution will take place."
+
 # CLI interface. 
 def parseOptions(argv):
     usage = "usage: %prog [options] arg"
@@ -105,10 +118,12 @@ def sync_images():
 
 
 def make_preview_from_raw(filename):
+    from shell import ShellCommander
+    commander = ShellCommander(remote=RS_REMOTE)
     command = "ufraw-batch --overwrite --embedded-image \
         --out-type=jpg --shrink=2 %s" % filename
     command = command.split()
-    return open_pipe(command)
+    return commander.open_pipe(command)
 
 
 
@@ -223,7 +238,6 @@ def main():
         camera.set_fstop(opts.fstop)
     if opts.iso:
         camera.set_iso(opts.iso)
-
     if opts.exposure_compensation:
         camera.set_exposure_compensation(opts.exposure_compensation)
 
@@ -236,16 +250,18 @@ def main():
             print error
         print output
 
-
     # Capture the image:
     if opts.capture:
         output, error = camera.capture_and_download_to_PI(opts.capture)
         if error:
             print error
         print output
-
-
-        # e, o = make_preview_from_raw(opts.capture)
+        # Do something with an image being taken:
+        if opts.preview:
+            output,  error = make_preview_from_raw(opts.capture)
+            if error:
+                print error
+            print output
         # print o, e
         # if opts.download:
         #     o, e = rsync(opts.capture)
