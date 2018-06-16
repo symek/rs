@@ -46,7 +46,6 @@ def parseOptions(argv):
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
     parser.add_option("-p", "--preview",    dest="preview", action="store",   default=None,  help="Make preview image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
-    parser.add_option("",   "--tiv",        dest="tiv",     action="store_true",   default=None,  help="Show the image using tiv.")
     parser.add_option("-s", "--show",       dest="show",    action="store",   default=None,  help="Show the image either by name or index.")
     parser.add_option("",   "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
     parser.add_option("",   "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
@@ -274,13 +273,6 @@ def main():
             if error:
                 print error
             print output
-
-    if opts.tiv:
-        if opts.capture:
-            show_image_with_tiv(opts.capture)
-        elif opts.preview:
-            filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
-            show_image_with_tiv(filename, False)
 
 
 
