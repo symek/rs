@@ -195,6 +195,7 @@ def main():
     # separated with ,
     if opts.move_rig:
         axies = process_rig_arguments(opts.move_rig)
+        print axies
         rig = Rig()
         rig.rotate('y', axies[0])
         rig.rotate('z', axies[1])
@@ -214,7 +215,6 @@ def main():
 
     # if opts.capture == "auto":
     #     opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
-   
 
     # Sets camera shooting properties:
     if opts.shutter:
@@ -227,25 +227,15 @@ def main():
     if opts.exposure_compensation:
         camera.set_exposure_compensation(opts.exposure_compensation)
 
-    # # Ronin control: 
-    # if opts.move:
-    #     move_arg = opts.move.split(",")
-    #     if not len(move_arg) == 3:
-    #         print "Needs three coordinates like 0,0,0"
-    #     accel = []
-    #     for i in move_arg:
-    #         accel += [int(i)]
-    #     move_head(*accel)
 
-
-    # # Preview:
-    # if opts.preview and not opts.capture: 
-    #     preview_filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
-    #     output, error    = make_preview(preview_filename)
-    #     if error:
-    #         print "WARNING: Can't make new preview. Outdated image!!!"
-    #         print error
-    #     print output
+    # Preview:
+    if opts.preview and not opts.capture: 
+        preview_filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
+        output, error    = camera.make_preview(preview_filename)
+        if error:
+            print "WARNING: Can't make new preview. Outdated image!!!"
+            print error
+        print output
 
     # # Capture the image:
     # if opts.capture:
