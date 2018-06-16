@@ -16,21 +16,12 @@ except:
 
 RS_DROPBOX_AVAIABLE = False
 
-try:
-    import dropbox
-    from dropbox.files import WriteMode
-    from dropbox.exceptions import ApiError, AuthError
-    RS_DROPBOX_AVAIABLE = True
-except:
-    pass
-
-
 class ShellCommander(object):
     def __init__(self, remote=RS_REMOTE):
         """
         """
         self.remote = RS_REMOTE
-        
+
     def open_pipe_rpyc(shell, command, verbose=True):
         """RPyc take on remote execution.
         """
@@ -127,6 +118,15 @@ class SSHClient:
 def upload_to_dropbox(filename):
     """Upload file to the dropbox using access token.
     """
+    try:
+        import dropbox
+        from dropbox.files import WriteMode
+        from dropbox.exceptions import ApiError, AuthError
+        RS_DROPBOX_AVAIABLE = True
+    except:
+        print "Can't upload to Dropbox. "
+        return False
+
     import os.path
 
     if filename.startswith("./"):
