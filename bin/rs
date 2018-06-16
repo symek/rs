@@ -227,7 +227,6 @@ def main():
     if opts.exposure_compensation:
         camera.set_exposure_compensation(opts.exposure_compensation)
 
-
     # Preview:
     if opts.preview and not opts.capture: 
         preview_filename = os.path.join(RS_IMAGES, "preview_%s.jpg" % opts.preview)
@@ -237,24 +236,29 @@ def main():
             print error
         print output
 
-    # # Capture the image:
-    # if opts.capture:
-    #     o, e = capture_and_download_to_PI(opts.capture)
-    #     print o, e
-    #     e, o = make_preview_from_raw(opts.capture)
-    #     print o, e
-    #     if opts.download:
-    #         o, e = rsync(opts.capture)
-    #         show_image(opts.capture)
-    #     elif opts.upload:
-    #         command = ["./rs", "-U", opts.capture]
-    #         open_pipe(command, remote=RS_EXECUTE_REMOTE)
-    #     else:   
-    #         # Download just embedded jpg from a raw footage.
-    #         file_, ext = os.path.splitext(opts.capture)
-    #         preview    = file_ + ".embedded" + ".jpg"
-    #         o, e = rsync(preview)
-    #         show_image(preview, rotate=0, resize=1)
+
+    # Capture the image:
+    if opts.capture:
+        output, error = camera.capture_and_download_to_PI(opts.capture)
+        if error:
+            print error
+        print output
+
+
+        # e, o = make_preview_from_raw(opts.capture)
+        # print o, e
+        # if opts.download:
+        #     o, e = rsync(opts.capture)
+        #     show_image(opts.capture)
+        # elif opts.upload:
+        #     command = ["./rs", "-U", opts.capture]
+        #     open_pipe(command, remote=RS_EXECUTE_REMOTE)
+        # else:   
+        #     # Download just embedded jpg from a raw footage.
+        #     file_, ext = os.path.splitext(opts.capture)
+        #     preview    = file_ + ".embedded" + ".jpg"
+        #     o, e = rsync(preview)
+        #     show_image(preview, rotate=0, resize=1)
 
 
     # # Show the image:
