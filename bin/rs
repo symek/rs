@@ -57,17 +57,13 @@ def parseOptions(argv):
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
     parser.add_option("",   "--set-config", dest="config",  action="store", default=None,                   help="Sets various camera settings.")
     parser.add_option("",   "--execute",    dest="execute", action="store", type='string', default=None,   help="Executes arbitrary command.")
-    parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
+    # parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
     parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
     parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
         
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
-
-
-
-
 
 def clamp(x, m=-1023, M=1023):
     """Basic clamp"""
@@ -112,10 +108,12 @@ def show_image(filename, console=False, rotate=0, resize=1.0):
         return open_pipe(command, remote=False)
 
 
-def sync_images():
-    command = ["./sync",]
-    o, e = open_pipe(command, remote=False)
-    return o, e
+# def sync_images():
+#     from shell import ShellCommander
+#     commander = ShellCommander(remote=RS_REMOTE)
+#     command = ["./sync",]
+#     o, e = open_pipe(command, remote=False)
+#     return o, e
 
 
 def make_preview_from_raw(filename):
@@ -264,21 +262,34 @@ def main():
                 print error
             print output
 
+    # Record video: 
+    if opts.movie:
+        camera.capture_movie(opts.movie)
+
+    # Send remotely to our computer 
+    if opts.capture and opts.download:
+        if not RS_REMOTE:
+            print "Can't download without remote connection."
+        commander = ShellCommander(True)
+        output, error = commander.rsync(opts.capture, opts.capture)
+        if error:
+            print error
+        print output
 
 
-        # print o, e
-        # if opts.download:
-        #     o, e = rsync(opts.capture)
-        #     show_image(opts.capture)
-        # elif opts.upload:
-        #     command = ["./rs", "-U", opts.capture]
-        #     open_pipe(command, remote=RS_EXECUTE_REMOTE)
-        # else:   
-        #     # Download just embedded jpg from a raw footage.
-        #     file_, ext = os.path.splitext(opts.capture)
-        #     preview    = file_ + ".embedded" + ".jpg"
-        #     o, e = rsync(preview)
-        #     show_image(preview, rotate=0, resize=1)
+
+
+    # print o, e
+    #     show_image(opts.capture)
+    # elif opts.upload:
+    #     command = ["./rs", "-U", opts.capture]
+    #     open_pipe(command, remote=RS_EXECUTE_REMOTE)
+    # else:   
+    #     # Download just embedded jpg from a raw footage.
+    #     file_, ext = os.path.splitext(opts.capture)
+    #     preview    = file_ + ".embedded" + ".jpg"
+    #     o, e = rsync(preview)
+    #     show_image(preview, rotate=0, resize=1)
 
 
     # # Show the image:
@@ -291,16 +302,11 @@ def main():
     #         image_filename = opts.show
         
 
-    # # Record video: 
-    # if opts.movie:
-    #     capture_movie(opts.movie)
 
     # if opts.panorama:
     #     pano_detail = compute_panorama()
 
 
-    # if opts.sync:
-    #     sync_images()
 
     # if opts.upload_file:
     #     upload_to_dropbox(opts.upload_file)

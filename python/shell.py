@@ -38,13 +38,13 @@ class ShellCommander(object):
         code = open_pipe_rpyc(command, verbose)
         return str(code), None
 
-    def rsync(self, filename):
+    def rsync(self, source, target):
         """Use rsync to retrive file from remote host.
         """
-        command =["rsync", "-va", "--progress", "%s@%s:~/sony7iii/%s" \
-            % (RS_USER_NAME, RS_REMOTE, filename), filename] 
+        command =["rsync", "-va", "--progress", "%s@%s:%s "  \
+            % (RS_USER_NAME, RS_REMOTE, source), target] 
 
-        return open_pipe(command, remote=False)
+        return self.open_pipe(command, remote=False)
 
 
     def open_pipe(self, command, verbose=True, remote=RS_REMOTE):
