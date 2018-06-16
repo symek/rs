@@ -161,7 +161,7 @@ def compute_hdri(fstops=5):
         capture_and_download(filename, 0)
 
 def get_current_extension():
-
+    pass
 
 def auto_name_image(prefix=None, postfix=None):
     import datetime, os
