@@ -256,7 +256,7 @@ def main():
             print error
         print output
         # Do something with an image being taken:
-        if opts.preview or opts.tiv:
+        if opts.preview:
             output,  error = make_preview_from_raw(opts.capture)
             if error:
                 print error
