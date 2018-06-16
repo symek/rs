@@ -5,10 +5,10 @@ RS_REMOTE=None
 try:
     import rpyc
     RS_REMOTE    = os.getenv("RS_REMOTE",    None)
-    RS_USERNAME  = os.getenv("RS_USER_NAME", None)
+    RS_USERNAME  = os.getenv("RS_USERNAME", None)
     RPYC_PORT    = os.getenv("RPYC",         55653)
     print "RS_REMOTE: " + RS_REMOTE
-    print "User: " + RS_USER_NAME
+    print "User: " + RS_USERNAME
     print "port: " + str(RPYC_PORT) 
 except:
     print "Can't import rpyc. No remote execution will take place."
@@ -42,7 +42,7 @@ class ShellCommander(object):
         """Use rsync to retrive file from remote host.
         """
         command =["rsync", "-va", "--progress", "%s@%s:%s "  \
-            % (RS_USER_NAME, RS_REMOTE, source), target] 
+            % (RS_USERNAME, RS_REMOTE, source), target] 
 
         return self.open_pipe(command, remote=False)
 
