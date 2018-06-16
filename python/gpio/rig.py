@@ -69,15 +69,15 @@ class Rig(object):
     angle = 485.333333333333333333
     pins  =[Pin("y_pulse",     5),
             Pin("y_direct",    6),
-            Pin("z_pulse",     13),
-            Pin("z_direct",    19),
+            Pin("x_pulse",     13),
+            Pin("x_direct",    19),
             Pin("zoom_pulse",  12),
             Pin("zoom_direct", 16)]
     axis  = {'y':    (pins[0], pins[1]), 
-             'z':    (pins[2], pins[3]), 
+             'x':    (pins[2], pins[3]), 
              'zoom': (pins[4], pins[5])}
     logfilename = "/tmp/gpio.rig.json"
-    log = {'state':{'y': 0.0, 'z': 0.0, 'zoom': 0.0}, "events":[]}
+    log = {'state':{'y': 0.0, 'x': 0.0, 'zoom': 0.0}, "events":[]}
     turn_off_on_exit = True
 
     def __init__(self):
@@ -157,6 +157,18 @@ class Rig(object):
         pijuice.status.GetIoDigitalInput(2)
         pijuice.status.SetIoDigitalOutput(2, value)
         pijuice.status.GetIoDigitalInput(2)
+
+    def force_state(self, y, x, z):
+        """Forces to set current state as one provided. 
+            Useful for calibration. First set position
+            to required values, then set state for (0,0,0).
+        """
+        self.log['state'][0] = y
+        self.log['state'][1] = x
+        self.log['state'][2] = z
+        return self.log['state']
+
+
 
 
 

@@ -43,6 +43,7 @@ def parseOptions(argv):
 
     #Options:
     parser.add_option("-m", "--move",       dest="move_rig",action="store",   default=None,  help="Move head.")
+    parser.add_option("",   "--reset-rig",  dest="reset_rig",action="store_true",   default=None,  help="Force reset of rig state for provided values.")
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
     parser.add_option("-p", "--preview",    dest="preview", action="store",   default=None,  help="Make preview image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
@@ -125,19 +126,6 @@ def make_preview_from_raw(filename):
     command = command.split()
     return commander.open_pipe(command)
 
-def show_image_with_tiv(filename, embedded=True):
-    """
-    """
-    from shell import ShellCommander
-    commander = ShellCommander(remote=RS_REMOTE)
-    if embedded:
-        file_, ext = os.path.splitext(raw_filename)
-        filename    = file_ + ".embedded" + ".jpg"
-    command = ['tiv', filename]
-    return commander.open_pipe(command)
-
-
-
 def aov_from_focal_length(length, sensor_width=36.0, sensor_hight=24.0):
     """ Compute field of view in radians 
         from focal length and sensor size (default 35mm).
@@ -219,13 +207,15 @@ def main():
 
     # Rig operations. cmd arg can be one, two or three numbers
     # separated with ,
-    if opts.move_rig:
+    if opts.move_rig: 
         axies = process_rig_arguments(opts.move_rig)
-        print axies
         rig = Rig()
         rig.rotate('y', axies[0])
-        rig.rotate('z', axies[1])
+        rig.rotate('x', axies[1])
         rig.rotate('zoom', axies[2])
+        if opts.reset_rig:
+            print "Reseting rig memory:", 
+            print rig.force_state(*axies)
 
 
     # Camera setup
