@@ -4,65 +4,22 @@ from multiprocessing import Process
 import threading
 from optparse import OptionParser
 
-
-RS_EXECUTE_REMOTE = False
+# ENV controling our behaviour
+# Do we have X forwarding?
 RS_XFORWARD = os.getenv("DISPLAY", None)
 if not RS_XFORWARD:
     print "Warning! No X forwarding will take place."
 
-
+# Where is store images on RPi?
 RS_IMAGES = os.getenv("RS_IMAGES", None)
 if not RS_IMAGES:
     print "Error! Can't work without RS_IMAGES env var. Quiting now."
     sys.exit()
 
-
-try:
-    import rpyc
-    RS_EXECUTE_REMOTE = os.getenv("RS_EXECUTE_REMOTE", False)
-except:
-    print "Can't import rpyc. No remote execution will take place."
-
-print "RS_EXECUTE_REMOTE:", bool(RS_EXECUTE_REMOTE)
-# ENV controling our behaviour
-RS_REMOTE_HOST    = os.getenv("RS_REMOTE_HOST", "10.20.6.217")
-RS_USER_NAME      = os.getenv("RS_USER_NAME",   "pi")
-RPYC_PORT         = os.getenv("RPYC", 55653)
-
-if RS_EXECUTE_REMOTE:
-    print "Host: " + RS_REMOTE_HOST
-    print "User: " + RS_USER_NAME
-    print "port: " + str(RPYC_PORT) 
-
-
-RS_DROPBOX_AVAIABLE = False
-RS_DROPBOX_ACCESS_TOKEN = "WW-HJbGm1E4AAAAAAAARz8mU2nGfZv0YNqZGVvmm2PBxQuHAcZ6a7RH2J1ER31_l"
-
-try:
-    import dropbox
-    from dropbox.files import WriteMode
-    from dropbox.exceptions import ApiError, AuthError
-    RS_DROPBOX_AVAIABLE = True
-except:
-    pass
-
-
-
-# Command line patterns
-GPHOTO_MAKE_PREVIEW = "gphoto2 --show-preview --force-overwrite --filename %s"
-GPHOTO_CAPTURE_DOWN = "gphoto2 --capture-image-and-download --force-overwrite --filename %s"
-GPHOTO_SET_ISO      = "gphoto2 --set-config iso=%s"
-GPHOTO_SET_FSTOPS   = "gphoto2 --set-config f-number=%s"
-GPHOTO_SET_SHUTTER  = "gphoto2 --set-config shutterspeed=%s"
-GPHOTO_SET_CONFIG   = "gphoto2 --set-config %s=%s"
-GPHOTO_CAPTURE_MOVIE = "gphoto2 --set-config movie=1 --wait-event=%ss --set-config movie=0"
-
-
 # CLI interface. 
 def parseOptions(argv):
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
-
 
     #Options:
     parser.add_option("-m", "--move",       dest="move",    action="store",   default=None,  help="Move head.")
@@ -86,81 +43,8 @@ def parseOptions(argv):
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
-# Class handing ssh connection with paramiko
-# Not in use atm.
-class SSHClient:
-    """Sends a single command to the remote host.
-       Looks for ssh keys. 
-    """
-    client = None
-    
-    def __init__(self, address, username, password):
-        import paramiko
-        print("Connecting to server.")
-        self.client = paramiko.client.SSHClient()
-        self.address = address
-        self.username = username
-        self.password = password
-        self.client.set_missing_host_key_policy(client.AutoAddPolicy())
-        self.client.connect(address, username=username, password=password, look_for_keys=True)
 
-    def __del__(self):
-        self.client.close()
 
- 
-    def send_command(self, command):
-        """Sends command without running shell."""
-        if(self.client):
-            stdin, stdout, stderr = self.client.exec_command(command)
-            while not stdout.channel.exit_status_ready():
-                # Print data when available
-                if stdout.channel.recv_ready():
-                    stdout_data = stdout.channel.recv(1024)
-                    stderr_data = stderr.channel.recv(2014)
-                    prev_stdout_data = b"1"
-                    prev_stderr_data = b"1"
-                    while prev_stdout_data:
-                        prev_stdout_data = stdout.channel.recv(1024)
-                        stdout_data += prev_stdout_data
-                    while prev_stderr_data:
-                        prev_stderr_data = stderr.channel.recv(1024)
-                        stderr_data += prev_stderr_data
-                    return stdout_data, stderr_data
-        else:
-             print("Connection not opened: %s, %s, %s" % (self.address, self.username, self.password))
-        return None, None
-
-def upload_to_dropbox(filename):
-    """Upload file to the dropbox using access token.
-    """
-    import os.path
-
-    if filename.startswith("./"):
-        filename = filename[2:]
-
-    absfilename = os.path.join("/", filename)
-
-    dbx = dropbox.Dropbox(RS_DROPBOX_ACCESS_TOKEN)
-    with open(filename, 'rb') as f:
-        # We use WriteMode=overwrite to make sure that the settings in the file
-        # are changed on upload
-        print("Uploading " + filename  + " to Dropbox as " + filename + "...")
-        try:
-            dbx.files_upload(f.read(), absfilename, mode=WriteMode('overwrite'))
-        except ApiError as err:
-            # This checks for the specific error where a user doesn't have
-            # enough Dropbox space quota to upload this file
-            if (err.error.is_path() and
-                    err.error.get_path().reason.is_insufficient_space()):
-                sys.exit("ERROR: Cannot back up; insufficient space.")
-            elif err.user_message_text:
-                print(err.user_message_text)
-                return None
-            else:
-                print(err)
-                return None
-
-    return True
 
 
 def clamp(x, m=-1023, M=1023):
@@ -183,95 +67,6 @@ def move_head_smooth(ax, ay, az, pow_=2.2, steps=10.0):
         open_pipe(command)
     sleep(2)
 
-
-
-def move_head(ax, ay, az):
-    """ ax, ay, az acceleration in x, y, z of a motor.
-    Values between -1023 and 1023 are valid.
-    """
-    from time import sleep
-    x = clamp(ax) + 1024
-    y = clamp(ay) + 1024
-    z = clamp(az) + 1024
-    command = ["./ronin", "0", str(x), "1", str(y), "3", str(z)]
-    open_pipe(command)
-    sleep(2)
-
-
-
-def open_pipe_ssh(command, verbose=True):
-    """ Executes command in ssh. 
-        Command: list of words in shell command.
-    """
-    import subprocess
-    HOST = RS_REMOTE_HOST
-    COMMAND = " ".join(command)
-    ssh = subprocess.Popen(["ssh", "-t", "-t", "%s" % HOST, COMMAND],
-                       shell=True,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
-    result = ssh.stdout.readlines()
-    error  = ssh.stderr.readlines()
-    return result, error
-
-def open_pipe_paramiko(command, verbose=True):
-    """ Executes command remotly via paramiko 
-        Command: list of words in shell command.
-    """
-    if not RS_EXECUTE_REMOTE:
-        print "This shouldn't be called at all (not paramiko or remote model not allowed)."
-        return None, None
-
-    client = SSHClient(RS_REMOTE_HOST, RS_USER_NAME, "")
-    ssh_command = " ".join(command)
-    print "Sends %s to %s as %s" % (ssh_command, RS_REMOTE_HOST, RS_USER_NAME)
-    result, error = client.send_command(ssh_command)
-    return result, error
-
-
-def open_pipe_rpyc(command, verbose=True):
-    """RPyc take on remote execution."""
-    assert 'rpyc' in globals()
-    r_command = " ".join(command)
-    connection = rpyc.classic.connect(RS_REMOTE_HOST, port=RPYC_PORT)
-    return connection.modules.os.system(r_command)
-
-def open_pipe_remote(command, verbose=True):
-    """"""
-    # return open_pipe_ssh(command, verbose)
-    # return open_pipe_paramiko(command, verbose)
-    code = open_pipe_rpyc(command, verbose)
-    return str(code), None
-
-def rsync(filename):
-    """Use rsync to retrive file from remote host."""
-    command =["rsync", "-va", "--progress", "%s@%s:~/sony7iii/%s" % (RS_USER_NAME, RS_REMOTE_HOST, filename), filename] 
-
-    return open_pipe(command, remote=False)
-
-
-def open_pipe(command, verbose=True, remote=RS_EXECUTE_REMOTE):
-    """ Executes command in subshell. 
-        Command: list of words in shell command. 
-    """
-    from subprocess import Popen, PIPE 
-    exec_mode = " (localy)"
-    if remote:
-        exec_mode = " (remotely: %s)" % RS_REMOTE_HOST
-    if verbose:
-        print "Command: ", 
-        print " ".join(command) + exec_mode
-
-    if remote:
-        return open_pipe_remote(command, verbose)
-
-    o, e =  Popen(command, shell=False, 
-                stdout=PIPE, stderr=PIPE, 
-                universal_newlines=True).communicate()
-
-    if o: print o
-    if e: print e
-    return o, e
 
 def show_image(filename, console=False, rotate=0, resize=1.0):
     from sys import platform
@@ -300,11 +95,6 @@ def sync_images():
     o, e = open_pipe(command, remote=False)
     return o, e
 
-def make_preview(filename):
-    command = GPHOTO_MAKE_PREVIEW % filename
-    command = command.split()
-    out, err = open_pipe(command)
-    return out, err
 
 def make_preview_from_raw(filename):
     command = "ufraw-batch --overwrite --embedded-image \
@@ -312,60 +102,6 @@ def make_preview_from_raw(filename):
     command = command.split()
     return open_pipe(command)
 
-def list_config(item=None):
-    config, err = open_pipe(['gphoto2', '--list-config'])
-    if err: 
-        print err
-        return   False
-    config = config.split()
-    for item in config:
-        command = ['gphoto2', '--get-config=%s' % item]
-        out, err = open_pipe(command)
-        print out
-
-def set_config(config, value):
-    command = GPHOTO_SET_CONFIG % (config, str(value))
-    command = command.split()
-    o, e = open_pipe(command)
-    return o, e
-
-def get_config(config):
-    command = "gphoto2 --get-config %s" % config
-    command = command.split()
-    return open_pipe(command)
-
-def set_autofocus(autofocus):
-    """ Set autofocus: True / False
-    """
-    return set_config('autofocus', autofocus)
-
-def set_iso(iso):
-    """ Set ISO: (SLog3 needs above 350)
-    """
-    return set_config('iso', iso)
-
-def set_shutter(shutterspeed):
-    return set_config("shutterspeed", shutterspeed)
-
-def set_fstop(fstop):
-    return set_config("f-number", str(fstop))
-
-
-def capture_and_download_to_PI(filename):
-    """ Capture and download photo.
-    """
-    command = GPHOTO_CAPTURE_DOWN % filename
-    command = command.split()
-    return open_pipe(command)
-    
-
-def capture_movie(time=10):
-    """ Capture 'time' length video.
-        Note: Unlike photos, movie file will remain on camera.
-    """
-    command = GPHOTO_CAPTURE_MOVIE % str(time)
-    command = command.split()
-    return open_pipe(command)
 
 
 def aov_from_focal_length(length, sensor_width=36.0, sensor_hight=24.0):
@@ -396,7 +132,6 @@ def compute_panorama(haov, vaov, hangle, vangle, overlap=.3):
     return panorama
 
 
-
 def compute_hdri(fstops=5):
     for stop in range(fstops):
         current_fstop = get_current(get_config("f-number")[0])
@@ -406,19 +141,14 @@ def compute_hdri(fstops=5):
         capture_and_download(filename, 0)
 
 
-def get_current(config):
-    # print config.split()
-    config = [line.split(":") for line in config.split("\n")]
-    # print config
-    for line in config:
-        if line[0] == "Current":
-            return line[1].strip()
 
 def auto_name_image(prefix=None, postfix=None):
     import datetime, os
     now = datetime.datetime.now().isoformat()
     folder, file_ = now.split("T")
     return os.path.join(prefix, folder, file_ + postfix)
+
+
 
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
@@ -428,7 +158,6 @@ def main():
     if opts.capture == "auto":
         opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
    
-
     # CLI.
     if opts.config:
         items = opts.config.split("=")
