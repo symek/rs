@@ -114,12 +114,16 @@ class Camera(object):
         return self.commander.open_pipe(command)
 
     def get_current_config(self, config):
-        # print config.split()
-        config = [line.split(":") for line in config.split("\n")]
-        # print config
-        for line in config:
-            if line[0] == "Current":
-                return line[1].strip()
-
-
+        """Parses current value of confing as returne by gphoto2
+           from camera.
+        """
+        command = ['gphoto2', '--get-config', config]
+        output, error =  self.commander.open_pipe(command)
+        if error:
+            print error
+            return False
+        for line in output.split("\n"):
+            if line.startswith("Current:"):
+                return line.split(":")[-1].strip()
+        return False
 

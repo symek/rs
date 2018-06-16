@@ -165,7 +165,7 @@ def get_current_extension():
 
 def auto_name_image(prefix=None, postfix=None):
     import datetime, os
-    now = datetime.datetime.now().isoformat()
+    now = datetime.datetime.now().replace(microsecond=0).isoformat()
     folder, file_ = now.split("T")
     file_ = file_.replace(":", "_")
     return os.path.join(prefix, folder, file_ + postfix)
