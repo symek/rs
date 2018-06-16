@@ -115,7 +115,11 @@ class Rig(object):
     def rotate(self, axe, angle):
         """
         """
+        # Revert sign for x
+        if axe == "x": angle *= -1
+        # 
         range_ = self.angle * abs(angle)
+        # TODO Multiplier for rotations in angles (360 misses 0.7 percent)
         range_ = range_ + self.angle*abs(angle)*.00733333333
         if angle < 0: 
             sign = GPIO.HIGH
@@ -163,9 +167,9 @@ class Rig(object):
             Useful for calibration. First set position
             to required values, then set state for (0,0,0).
         """
-        self.log['state'][0] = y
-        self.log['state'][1] = x
-        self.log['state'][2] = z
+        self.log['state']['y']    = y
+        self.log['state']['x']    = x
+        self.log['state']['zoom'] = z
         return self.log['state']
 
 
