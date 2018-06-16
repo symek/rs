@@ -1,5 +1,5 @@
 
-from shell import Executor
+from shell import ShellCommander
 
 class Camera(object):
     GPHOTO_MAKE_PREVIEW = "gphoto2 --show-preview --force-overwrite --filename %s"
@@ -9,35 +9,35 @@ class Camera(object):
     GPHOTO_SET_SHUTTER  = "gphoto2 --set-config shutterspeed=%s"
     GPHOTO_SET_CONFIG   = "gphoto2 --set-config %s=%s"
     GPHOTO_CAPTURE_MOVIE = "gphoto2 --set-config movie=1 --wait-event=%ss --set-config movie=0"
-    executor = Executor()
+    commander = ShellCommander()
 
     def make_preview(self, filename):
         command = self.GPHOTO_MAKE_PREVIEW % filename
         command = command.split()
-        out, err = self.executor.open_pipe(command)
+        out, err = self.commander.open_pipe(command)
         return out, err
 
     def list_config(self, item=None):
-        config, err = self.executor.open_pipe(['gphoto2', '--list-config'])
+        config, err = self.commander.open_pipe(['gphoto2', '--list-config'])
         if err: 
             print err
             return   False
         config = config.split()
         for item in config:
             command = ['gphoto2', '--get-config=%s' % item]
-            out, err = self.executor.open_pipe(command)
+            out, err = self.commander.open_pipe(command)
             print out
 
     def set_config(self, config, value):
         command = self.GPHOTO_SET_CONFIG % (config, str(value))
         command = command.split()
-        o, e = self.executor.open_pipe(command)
+        o, e = self.commander.open_pipe(command)
         return o, e
 
     def get_config(self, config):
         command = "gphoto2 --get-config %s" % config
         command = command.split()
-        return self.executor.open_pipe(command)
+        return self.commander.open_pipe(command)
 
     def set_autofocus(self, autofocus):
         """ Set autofocus: True / False
@@ -55,13 +55,15 @@ class Camera(object):
     def set_fstop(self, fstop):
         return self.set_config("f-number", str(fstop))
 
+    def set_exposure_compensation(self, exposure):
+        return self.set_config("exposurecompensation", exposure)
 
     def capture_and_download_to_PI(self, filename):
         """ Capture and download photo.
         """
         command = self.GPHOTO_CAPTURE_DOWN % filename
         command = command.split()
-        return self.executor.open_pipe(command)
+        return self.commander.open_pipe(command)
         
 
     def capture_movie(self, time=10):
@@ -70,7 +72,7 @@ class Camera(object):
         """
         command = self.GPHOTO_CAPTURE_MOVIE % str(time)
         command = command.split()
-        return self.executor.open_pipe(command)
+        return self.commander.open_pipe(command)
 
     def get_current(self,config):
         # print config.split()

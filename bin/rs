@@ -29,14 +29,15 @@ def parseOptions(argv):
     parser = OptionParser(usage)
 
     #Options:
-    parser.add_option("-m", "--move",       dest="move",    action="store",   default=None,  help="Move head.")
+    parser.add_option("-m", "--move",       dest="move_rig",action="store",   default=None,  help="Move head.")
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
     parser.add_option("-p", "--preview",    dest="preview", action="store",   default=None,  help="Make preview image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
     parser.add_option("-s", "--show",       dest="show",    action="store",   default=None,  help="Show the image either by name or index.")
     parser.add_option("",   "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
-    parser.add_option("-f", "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
-    parser.add_option("-i", "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
+    parser.add_option("",   "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
+    parser.add_option("",   "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
+    parser.add_option("",   "--exp-comp",   dest="exposure_compensation",     action="store",   default=0,  help="Sets exposure compensation.")
     parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image.")
     parser.add_option("",   "--rotate",     dest="rotate",  action="store", type="int",    default=0,       help="Rotate the image.")
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
@@ -156,40 +157,75 @@ def auto_name_image(prefix=None, postfix=None):
     return os.path.join(prefix, folder, file_ + postfix)
 
 
+def process_rig_arguments(args):
+    """Small utility to parse --move args.
+    """
+    index = 0
+    axies = [0,0,0]
+    args  = args.split(",")
+    for a in args:
+        try:
+            axies[index] = float(a)
+            index += 1
+        except:
+            index += 1
+            print "Can't parse %s " % str(a)
+            print "Ignoring it."
+    return axies
+
 
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
     """
+    from gpio.rig import Rig
+    from shell import ShellCommander
+    
     # Command line
     opts, args, parser = parseOptions(sys.argv[1:])
-    # Camera setup
 
+    # # Back door to remotly execute anything
+    if opts.execute:
+        commander = ShellCommander(remote=False)
+        output, error = commander.open_pipe(opts.execute.split(" "))
+        print output
+        if error:
+            print error
+
+    # Rig operations. cmd arg can be one, two or three numbers
+    # separated with ,
+    if opts.move_rig:
+        axies = process_rig_arguments(opts.move_rig)
+        rig = Rig()
+        rig.rotate('y', axies[0])
+        rig.rotate('z', axies[1])
+        rig.rotate('zoom', axies[2])
+
+
+    # Camera setup
     from camera.sony import A7 as Camera
     camera = Camera()
-    print camera.get_config("autofocus")
 
+    # Sets arbitrary config (basic gphoto2 wrapper).
+    if opts.config:
+        items = opts.config.split("=")
+        assert len(items) == 2
+        name, value = items
+        camera.set_config(name, value)
 
     # if opts.capture == "auto":
     #     opts.capture = auto_name_image(prefix="./images/", postfix=".arw")
    
-    # # CLI.
-    # if opts.config:
-    #     items = opts.config.split("=")
-    #     assert len(items) == 2
-    #     name, value = items
-    #     set_config(name, value)
 
-    # # Back door to remotly execute anything
-    # if opts.execute:
-    #     print open_pipe(opts.execute.split(" "))
+    # Sets camera shooting properties:
+    if opts.shutter:
+        camera.set_shutter(opts.shutter)
+    if opts.fstop:
+        camera.set_fstop(opts.fstop)
+    if opts.iso:
+        camera.set_iso(opts.iso)
 
-    # # Sets camera shooting properties:
-    # if opts.shutter:
-    #     set_shutter(opts.shutter)
-    # if opts.fstop:
-    #     set_fstop(opts.fstop)
-    # if opts.iso:
-    #     set_iso(opts.iso)
+    if opts.exposure_compensation:
+        camera.set_exposure_compensation(opts.exposure_compensation)
 
     # # Ronin control: 
     # if opts.move:

@@ -25,7 +25,12 @@ except:
     pass
 
 
-class Executor(object):
+class ShellCommander(object):
+    def __init__(self, remote=RS_REMOTE):
+        """
+        """
+        self.remote = RS_REMOTE
+        
     def open_pipe_rpyc(shell, command, verbose=True):
         """RPyc take on remote execution.
         """

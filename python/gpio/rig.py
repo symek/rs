@@ -78,6 +78,7 @@ class Rig(object):
              'zoom': (pins[4], pins[5])}
     logfilename = "/tmp/gpio.rig.json"
     log = {'state':{'y': 0.0, 'z': 0.0, 'zoom': 0.0}, "events":[]}
+    turn_off_on_exit = True
 
     def __init__(self):
         # Pin Setup:
@@ -94,6 +95,16 @@ class Rig(object):
         GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
         for pin in self.pins:
             GPIO.setup(pin.number, GPIO.OUT)
+        # Turn on power for rig 
+        self.turn_on()
+
+    def __del__(self):
+        """ Turn off rig's power when destroying object. This might not be good idea
+            for strong wind. Set 'turn_off_on_exit' to False to allow leaving rig
+            with power turned on (it gonna eat ???mA at 12V)
+        """
+        if self.turn_off_on_exit:
+            self.turn_off()
 
     def _update_log(self):
         with open(self.logfilename, 'w') as file:
