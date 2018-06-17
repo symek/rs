@@ -57,7 +57,8 @@ def parseOptions(argv):
     parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image.")
     parser.add_option("",   "--rotate",     dest="rotate",  action="store", type="int",    default=0,       help="Rotate the image.")
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
-    parser.add_option("",   "--set-config", dest="config",  action="store", default=None,                   help="Sets various camera settings.")
+    parser.add_option("",   "--set-config", dest="set_config",  action="store", default=None,                   help="Sets various camera settings.")
+    parser.add_option("",   "--get-config", dest="get_config",  action="store", default=None,               help="Gets various camera settings.")
     parser.add_option("",   "--execute",    dest="execute", action="store", type='string', default=None,   help="Executes arbitrary command.")
     # parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
     parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
@@ -226,11 +227,16 @@ def main():
     camera = Camera()
 
     # Sets arbitrary config (basic gphoto2 wrapper).
-    if opts.config:
-        items = opts.config.split("=")
+    if opts.set_config:
+        items = opts.set_config.split("=")
         assert len(items) == 2
         name, value = items
         camera.set_config(name, value)
+
+    # Reads current config. 
+    if opts.get_config:
+        config = camera.get_current_config(opts.get_config)
+        print config
 
     if opts.capture == "auto":
         extension = '.jpg'
