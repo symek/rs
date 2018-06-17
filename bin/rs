@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import os, time, sys, re
 from multiprocessing import Process
-import threading, datetime
+import threading, datetime, json
+
 from optparse import OptionParser
 
 RS_ROOT = os.getenv("RS_ROOT", None)
@@ -289,9 +290,9 @@ def main():
         now =datetime.datetime.now().replace(microsecond=0)
         comment = {'date': now.isoformat(), 'comment': opts.comment,
         'file': opts.capture, 'preview': opts.preview, 'movie': opts.movie}
-        logfilename = os.path.splitext(opts.capture)[0]
-        with open(logfilename + ".json", 'w') as file:
-            json.dump(logfilename, comment)
+        commentfilename = os.path.splitext(opts.capture)[0]
+        with open(commentfilename + ".json", 'w') as file:
+            json.dump(comment, file, indent=4)
 
 
 
