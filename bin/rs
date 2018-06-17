@@ -197,6 +197,17 @@ def process_rig_arguments(args):
 def calibrate_lens(lens_name, camera, rig, angular_length=37):
     """
     """
+    def find_focal(exif):
+        for line in exif.split("\n"):
+            if line.startswith("Focal Length"):
+                if "mm" in line and len(line.split(":")) == 2:
+                    length = line.split(":")[-1]
+                    try:
+                        return float(length.replace('mm', ''))
+                    except:
+                        return False
+
+
     from shell import ShellCommander
     if rig.log['state']['zoom'] != 0.0:
         print "Make sure lenses are in widest position and reset rig state (with --reset command)"
@@ -211,34 +222,30 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     # Set temporarily to low quality to speed up things.
     camera.set_config("imagequality", '0')
 
-    if not os.path.isfile(filename):
-        commander.open_pipe(['echo', '{}', '>', filename])
+    #if not os.path.isfile(filename):
+    #    commander.open_pipe(['echo', '{}', '>', filename])
 
     for angle in range(angular_length):
 
         with open(filename, 'r') as file:
             focal_map = json.load(file)
-
+        file.close()
         camera.capture_and_download_to_PI(tmpfile)
-        command = ['exiftool', tmpfile, '|', 'grep', "Focal Length"]
+        command = ['exiftool', tmpfile]
         output, error = commander.open_pipe(command)
         if error:
             return False
-
-        line = output.split("\n")[0]
-        if "mm" in line and len(line.split(":")) == 2:
-            length = line.split(":")[-1]
-            try:
-                length = float(length.replace('mm', ''))
-            except:
-                return False
-
+        length = find_focal(output)
+        if not length:
+            return False
         # Save and proceed
         focal_map[angle] = length
-        with open(filename, 'r') as file:
-            json.dump(focal_map, file)
 
-        rig.rotate('z', 1)
+        with open(filename, 'w') as file:
+            json.dump(focal_map, file, indent=4)
+
+        file.close()
+        rig.rotate('zoom', 1)
         angle += 1
 
     camera.set_config("imagequality", quality)
