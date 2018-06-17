@@ -221,6 +221,7 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     commander = ShellCommander()
     # Set temporarily to low quality to speed up things.
     camera.set_config("imagequality", '0')
+    camera.set_config("imagesize", '2')
 
     # create first here, so then we just append:
     if not os.path.isfile(filename):
@@ -254,6 +255,7 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
         angle += 1
 
     camera.set_config("imagequality", '3')
+    camera.set_config("imagesize", '0')
     return True
 
 
@@ -367,19 +369,18 @@ def main():
 
 
     if opts.panorama:
-        from math import degrees
-        print degrees(aov_from_focal_length(float(opts.panorama))[0])
-        print degrees(aov_from_focal_length(float(opts.panorama))[1])
-        # rig = Rig()
-        # zoom_angle = rig.log['state']['zoom']
-        # angular_l  = camera.lens.angular_length
+        rig = Rig()
+        zoom_angle = rig.log['state']['zoom']
+        with open("Sony28-70calibration.json") as file:
+            focals = json.load(file)
 
-        # min_length = camera.lens.min_focal_length
-        # max_length = camera.lens.max_focal_lenght
+
+
 
     if opts.calibrate_lens:
         rig = Rig()
-        print calibrate_lens(opts.calibrate_lens, camera, rig, 37) 
+        print calibrate_lens(opts.calibrate_lens, camera, 
+            rig, camera.lens.angular_length) 
 
 
     # print o, e
