@@ -246,11 +246,6 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     return True
 
 
-
-
-
-
-
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
     """
@@ -361,12 +356,15 @@ def main():
 
 
     if opts.panorama:
-        rig = Rig()
-        zoom_angle = rig.log['state']['zoom']
-        angular_l  = camera.lens.angular_length
+        from math import degrees
+        print degrees(aov_from_focal_length(float(opts.panorama))[0])
+        print degrees(aov_from_focal_length(float(opts.panorama))[1])
+        # rig = Rig()
+        # zoom_angle = rig.log['state']['zoom']
+        # angular_l  = camera.lens.angular_length
 
-        min_length = camera.lens.min_focal_length
-        max_length = camera.lens.max_focal_lenght
+        # min_length = camera.lens.min_focal_length
+        # max_length = camera.lens.max_focal_lenght
 
     if opts.calibrate_lens:
         rig = Rig()
