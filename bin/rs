@@ -197,20 +197,21 @@ def process_rig_arguments(args):
 def calibrate_lens(lens_name, camera, rig, angular_length=37):
     """
     """
-    def find_focal(exif):
+    def find_lense_details(exif, tags):
+        results = {}
         for line in exif.split("\n"):
-            if line.startswith("Focal Length"):
-                if "mm" in line and len(line.split(":")) == 2:
-                    length = line.split(":")[-1]
-                    try:
-                        return float(length.replace('mm', ''))
-                    except:
-                        return False
+            for tag in tags:
+                if line.startswith(tag):
+                    if len(line.split(":")) == 2:
+                        data = line.split(":")[-1]
+                        results[tag] = data
+        return results
 
 
     from shell import ShellCommander
     if rig.log['state']['zoom'] != 0.0:
-        print "Make sure lenses are in widest position and reset rig state (with --reset command)"
+        print "Make sure lenses are in widest position \
+            and reset rig state (with --reset command)"
         return False
 
     filename  = lens_name + "calibration.json"
@@ -218,28 +219,32 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     length    = None
     tmpfile   = '/tmp/zoomtest.jpg'
     commander = ShellCommander()
-    quality = camera.get_config('imagequality')
     # Set temporarily to low quality to speed up things.
     camera.set_config("imagequality", '0')
 
-    #if not os.path.isfile(filename):
-    #    commander.open_pipe(['echo', '{}', '>', filename])
+    # create first here, so then we just append:
+    if not os.path.isfile(filename):
+        with open(filename, 'w') as file:
+            json.dump({}, file)
 
     for angle in range(angular_length):
-
         with open(filename, 'r') as file:
             focal_map = json.load(file)
         file.close()
         camera.capture_and_download_to_PI(tmpfile)
-        command = ['exiftool', tmpfile]
-        output, error = commander.open_pipe(command)
+        read_tags = ['exiftool', '-s', '-s', '-FOV', '-FocalLength', tmpfile]
+        output, error = commander.open_pipe(read_tags)
         if error:
             return False
-        length = find_focal(output)
-        if not length:
+        lens_details = find_lense_details(output,  ('FOV', 'FocalLength'))
+        if not lens_details:
             return False
+
+        fov   = float(lens_details['FOV'].replace('deg', ''))
+        focal = float(lens_details['FocalLength'].replace('mm', ''))
         # Save and proceed
-        focal_map[angle] = length
+        step = {'fov': fov, 'focal': focal}
+        focal_map[angle] = step
 
         with open(filename, 'w') as file:
             json.dump(focal_map, file, indent=4)
@@ -248,8 +253,7 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
         rig.rotate('zoom', 1)
         angle += 1
 
-    camera.set_config("imagequality", quality)
-
+    camera.set_config("imagequality", '3')
     return True
 
 
