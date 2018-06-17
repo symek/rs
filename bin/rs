@@ -198,16 +198,24 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     """
     """
     from shell import ShellCommander
-    if camera.log['state']['zoom'] != 0.0:
+    if rig.log['state']['zoom'] != 0.0:
         print "Make sure lenses are in widest position and reset rig state (with --reset command)"
         return False
-    filename = lens_name + "calibration.json"
-    angle    = 0
-    tmpfile  = '/tmp/zoomtest.jpg'
+
+    filename  = lens_name + "calibration.json"
+    angle     = 0
+    length    = None
+    tmpfile   = '/tmp/zoomtest.jpg'
     commander = ShellCommander()
+    quality = camera.get_config('imagequality')
+    # Set temporarily to low quality to speed up things.
     camera.set_config("imagequality", '0')
-    length = None
+
+    if not os.path.isfile(filename):
+        commander.open_pipe(['echo', '{}', '>', filename])
+
     for angle in range(angular_length):
+
         with open(filename, 'r') as file:
             focal_map = json.load(file)
 
@@ -233,7 +241,13 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
         rig.rotate('z', 1)
         angle += 1
 
+    camera.set_config("imagequality", quality)
+
     return True
+
+
+
+
 
 
 
@@ -346,7 +360,7 @@ def main():
             json.dump(comment, file, indent=4)
 
 
-    if opts.panoramic:
+    if opts.panorama:
         rig = Rig()
         zoom_angle = rig.log['state']['zoom']
         angular_l  = camera.lens.angular_length
@@ -354,7 +368,9 @@ def main():
         min_length = camera.lens.min_focal_length
         max_length = camera.lens.max_focal_lenght
 
-
+    if opts.calibrate_lens:
+        rig = Rig()
+        print calibrate_lens(opts.calibrate_lens, camera, rig, 37) 
 
 
     # print o, e
