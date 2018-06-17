@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import os, time, sys, re
 from multiprocessing import Process
-import threading
+import threading, datetime
 from optparse import OptionParser
 
 RS_ROOT = os.getenv("RS_ROOT", None)
@@ -45,6 +45,7 @@ def parseOptions(argv):
     parser.add_option("-m", "--move",       dest="move_rig",action="store",   default=None,  help="Move head.")
     parser.add_option("",   "--reset-rig",  dest="reset_rig",action="store_true",   default=None,  help="Force reset of rig state for provided values.")
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
+    parser.add_option("",   "--comment",    dest="comment", action="store",    default=None,  help="Saves few words desribing photo / video.")
     parser.add_option("-p", "--preview",    dest="preview", action="store",   default=None,  help="Make preview image")
     parser.add_option("-M", "--movie",      dest="movie",   action="store",   default=None,  help="Capture the movie.")
     parser.add_option("-s", "--show",       dest="show",    action="store",   default=None,  help="Show the image either by name or index.")
@@ -282,6 +283,15 @@ def main():
         if error:
             print error
         print output
+
+    # Saves a comment:
+    if opts.comment:
+        now =datetime.datetime.now().replace(microsecond=0)
+        comment = {'date': now.isoformat(), 'comment': opts.comment,
+        'file': opts.capture, 'preview': opts.preview, 'movie': opts.movie}
+        logfilename = os.path.splitext(opts.capture)[0]
+        with open(logfilename + ".json", 'w') as file:
+            json.dump(logfilename, comment)
 
 
 
