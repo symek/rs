@@ -242,7 +242,7 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
         focal_map[angle] = length
 
         with open(filename, 'w') as file:
-            json.dump(focal_map, file)
+            json.dump(focal_map, file, indent=4)
 
         file.close()
         rig.rotate('zoom', 1)
