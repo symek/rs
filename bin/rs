@@ -197,7 +197,8 @@ def process_rig_arguments(args):
 def calibrate_lens(lens_name, camera, rig, angular_length=37):
     """
     """
-    if camera.log['state']['zoom'] != 0.0:
+    from shell import ShellCommander
+    if rig.log['state']['zoom'] != 0.0:
         print "Make sure lenses are in widest position and reset rig state (with --reset command)"
         return False
     filename = lens_name + "calibration.json"
@@ -228,7 +229,8 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
 
         rig.rotate('z', 1)
         angle += 1
-
+    
+    camera.set_config("imagequality", '3')
 
 
 
@@ -342,7 +344,7 @@ def main():
             json.dump(comment, file, indent=4)
 
 
-    if opts.panoramic:
+    if opts.panorama:
         rig = Rig()
         zoom_angle = rig.log['state']['zoom']
         angular_l  = camera.lens.angular_length
@@ -350,7 +352,9 @@ def main():
         min_length = camera.lens.min_focal_length
         max_length = camera.lens.max_focal_lenght
 
-
+    if opts.calibrate_lens:
+        rig = Rig()
+        print calibrate_lens("Sony28-70", camera, rig, 37) 
 
 
     # print o, e
