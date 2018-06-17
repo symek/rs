@@ -373,7 +373,24 @@ def main():
         zoom_angle = rig.log['state']['zoom']
         with open("Sony28-70calibration.json") as file:
             focals = json.load(file)
+            print focals
 
+        # 'x' means that user expresses himself 
+        # in term of brackes: 180-0,10x1
+        if 'x' in opts.panorama:
+            spreads, res = opts.panorama.split(",")
+            h_spread, v_spread = spreads.split("-")
+            resx, resy = res.split("x")
+            h_angle    = float(h_spread) / float(resx)
+            zoom_level = -1
+            print h_angle
+            tmp = 1000000
+            for zoom in focals:
+                error = abs(float(focals[zoom]['fov']) - h_angle)
+                if  error < tmp:
+                    zoom_level = zoom
+            print zoom_level,
+            print focals[zoom_level]
 
 
 
