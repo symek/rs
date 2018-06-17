@@ -170,6 +170,7 @@ class Rig(object):
         self.log['state']['y']    = y
         self.log['state']['x']    = x
         self.log['state']['zoom'] = z
+        self._update_log()
         return self.log['state']
 
 
