@@ -1,4 +1,4 @@
-from .camera import Camera
+from .camera import Camera, Lens
 
 class A7(Camera):
-	pass
+	lens = Lens()

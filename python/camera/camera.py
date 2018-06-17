@@ -127,3 +127,18 @@ class Camera(object):
                 return line.split(":")[-1].strip()
         return False
 
+
+class Lens(object):
+    """ Minimal lens class. 
+    """
+    max_focal_length = 28
+    min_focal_length = 70
+    angular_length   = 36
+    length_table     = {}
+
+    def __init__(self, max_focal_length=None, min_focal_length=None):
+        if max:
+            self.maxfocallenth = max_focal_length
+        if min:
+            self.maxfocallenth = min_focal_length
+

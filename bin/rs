@@ -44,6 +44,8 @@ def parseOptions(argv):
 
     #Options:
     parser.add_option("-m", "--move",       dest="move_rig",action="store",   default=None,  help="Move head.")
+    parser.add_option("",   "--zoom",       dest="zoom",    action="store",   default=None,  help="Unlike --move this takes percentage of zoom, \
+        and checkes with lenses how to deal with that. 0 = widest, 100 longest")
     parser.add_option("",   "--reset-rig",  dest="reset_rig",action="store_true",   default=None,  help="Force reset of rig state for provided values.")
     parser.add_option("-c", "--capture",    dest="capture", action="store",   default=None,  help="Capture an image")
     parser.add_option("",   "--comment",    dest="comment", action="store",    default=None,  help="Saves few words desribing photo / video.")
@@ -54,7 +56,7 @@ def parseOptions(argv):
     parser.add_option("",   "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
     parser.add_option("",   "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
     parser.add_option("",   "--exp-comp",   dest="exposure_compensation",     action="store",   default=0,  help="Sets exposure compensation.")
-    parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image.")
+    parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image: 10x5 (horizontal x vertical shots)")
     parser.add_option("",   "--rotate",     dest="rotate",  action="store", type="int",    default=0,       help="Rotate the image.")
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
     parser.add_option("",   "--set-config", dest="set_config",  action="store", default=None,                   help="Sets various camera settings.")
@@ -64,6 +66,7 @@ def parseOptions(argv):
     parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after caputer (only with capture.")
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
     parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
+    parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
         
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
@@ -191,6 +194,44 @@ def process_rig_arguments(args):
     return axies
 
 
+def calibrate_lens(lens_name, camera, rig, angular_length=37):
+    """
+    """
+    if camera.log['state']['zoom'] != 0.0:
+        print "Make sure lenses are in widest position and reset rig state (with --reset command)"
+        return False
+    filename = lens_name + "calibration.json"
+    angle    = 0
+    tmpfile  = '/tmp/zoomtest.jpg'
+    commander = ShellCommander()
+    camera.set_config("imagequality", '0')
+    length = None
+    for angle in range(angular_length):
+        with open(filename, 'w') as file:
+            focal_map = json.load(file)
+            camera.capture_and_download_to_PI(tmpfile)
+            command = ['exiftool', tmpfile, '|', 'grep', "Focal Length"]
+            output, error = commander.open_pipe(command)
+            if not error:
+                line = output.split("\n")[0]
+                if "mm" in line and len(line.split(":")) == 2:
+                    length = line.split(":")[-1]
+                    try:
+                        length = float(length.replace('mm', ''))
+                    except:
+                        return False
+            else:
+                return False
+            # Save and proceed
+            focal_map[angle] = length
+            json.dump(focal_map, file)
+
+        rig.rotate('z', 1)
+        angle += 1
+
+
+
+
 
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
@@ -299,6 +340,15 @@ def main():
         commentfilename = os.path.splitext(opts.capture)[0]
         with open(commentfilename + ".json", 'w') as file:
             json.dump(comment, file, indent=4)
+
+
+    if opts.panoramic:
+        rig = Rig()
+        zoom_angle = rig.log['state']['zoom']
+        angular_l  = camera.lens.angular_length
+
+        min_length = camera.lens.min_focal_length
+        max_length = camera.lens.max_focal_lenght
 
 
 
