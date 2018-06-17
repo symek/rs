@@ -197,6 +197,7 @@ def process_rig_arguments(args):
 def calibrate_lens(lens_name, camera, rig, angular_length=37):
     """
     """
+    from shell import ShellCommander
     if camera.log['state']['zoom'] != 0.0:
         print "Make sure lenses are in widest position and reset rig state (with --reset command)"
         return False
@@ -207,29 +208,32 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     camera.set_config("imagequality", '0')
     length = None
     for angle in range(angular_length):
-        with open(filename, 'w') as file:
+        with open(filename, 'r') as file:
             focal_map = json.load(file)
-            camera.capture_and_download_to_PI(tmpfile)
-            command = ['exiftool', tmpfile, '|', 'grep', "Focal Length"]
-            output, error = commander.open_pipe(command)
-            if not error:
-                line = output.split("\n")[0]
-                if "mm" in line and len(line.split(":")) == 2:
-                    length = line.split(":")[-1]
-                    try:
-                        length = float(length.replace('mm', ''))
-                    except:
-                        return False
-            else:
+
+        camera.capture_and_download_to_PI(tmpfile)
+        command = ['exiftool', tmpfile, '|', 'grep', "Focal Length"]
+        output, error = commander.open_pipe(command)
+        if error:
+            return False
+
+        line = output.split("\n")[0]
+        if "mm" in line and len(line.split(":")) == 2:
+            length = line.split(":")[-1]
+            try:
+                length = float(length.replace('mm', ''))
+            except:
                 return False
-            # Save and proceed
-            focal_map[angle] = length
+
+        # Save and proceed
+        focal_map[angle] = length
+        with open(filename, 'r') as file:
             json.dump(focal_map, file)
 
         rig.rotate('z', 1)
         angle += 1
 
-
+    return True
 
 
 
