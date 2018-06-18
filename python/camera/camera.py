@@ -33,6 +33,7 @@ class NonLegalConfigValue(Exception):
 class Camera(object):
     GPHOTO_MAKE_PREVIEW = "gphoto2 --show-preview --force-overwrite --filename %s"
     GPHOTO_CAPTURE_DOWN = "gphoto2 --capture-image-and-download --force-overwrite --filename %s"
+    GPHOTO_CAPTURE      = "gphoto2 --trigger-capture "
     GPHOTO_SET_ISO      = "gphoto2 --set-config iso=%s"
     GPHOTO_SET_FSTOPS   = "gphoto2 --set-config f-number=%s"
     GPHOTO_SET_SHUTTER  = "gphoto2 --set-config shutterspeed=%s"
@@ -103,8 +104,22 @@ class Camera(object):
         command = self.GPHOTO_CAPTURE_DOWN % filename
         command = command.split()
         return self.commander.open_pipe(command)
-        
 
+    def capture_and_leave_on_device(self, filename):
+        """ Capture photo but leave it on a device. 
+        """
+        command = self.GPHOTO_CAPTURE
+        command = command.split()
+        return self.commander.open_pipe(command)
+
+    def capture_image(filename, download=False):
+        """ Switcher to select between two policies.
+        """
+        if not download:
+            return self.capture_and_leave_on_device(filename)
+        else:
+            self.capture_and_download_to_PI(filename)
+        
     def capture_movie(self, time=10):
         """ Capture 'time' length video.
             Note: Unlike photos, movie file will remain on camera.
