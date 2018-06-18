@@ -3,7 +3,11 @@
 class Panoramic(object):
     """ Simplifies sequential shooting. 
     """
-    pano_details = {}
+    pano_details  = {}
+    PANO_CENTER   = 0
+    PANO_LEFT     = 1
+    PANO_RIGHT    = 2
+    pano_start_at = PANO_LEFT
     def __init__(self, camera, rig, aspect_ratio=.66666666666):
         self.camera       = camera
         self.rig          = rig
@@ -65,10 +69,15 @@ class Panoramic(object):
             print "\tcolums %s, rows: %s (including 30 percent overlap)" % (colums, rows)
 
          # Compute rig movements:
-        y_start_pos, x_start_pos = (-float(hangle)/2, -float(vangle)/2)
-        hstep, vstep             = (fov/3, fovv/3)
-        zoom_degrees             = float(zoom_level) - self.rig.log['state']['zoom']
+        hstep, vstep = (fov/3, fovv/3)
+        y_start_pos, x_start_pos = (0, 0)
+        if self.pano_start_at == self.PANO_CENTER:
+            y_start_pos, x_start_pos = (-float(hangle)/2, -float(vangle)/2)
+        elif self.pano_start_at == self.PANO_RIGHT:
+            y_start_pos, x_start_pos = (float(hangle)/2, float(vangle)/2)
+            hstep, vstep             = (-fov/3, -fovv/3)
 
+        zoom_degrees = float(zoom_level) - self.rig.log['state']['zoom']
         new_zoom = self.rig.log['state']['zoom']
         new_fov  = self.focals[str(int(new_zoom))]
 
