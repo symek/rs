@@ -118,7 +118,7 @@ class Camera(object):
         if not download:
             return self.capture_and_leave_on_device(filename)
         else:
-            self.capture_and_download_to_PI(filename)
+            return self.capture_and_download_to_PI(filename)
         
     def capture_movie(self, time=10):
         """ Capture 'time' length video.
