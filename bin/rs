@@ -166,15 +166,22 @@ def compute_hdri(fstops=5):
         set_fstop(current_fstop+1)
         capture_and_download(filename, 0)
 
-def get_current_extension():
-    pass
+def mock_auto_filename(camera):
+    """ Creates filename from date and time. 
+    """
+    def auto_name_image(prefix=None, postfix=None):
+        import datetime, os
+        now = datetime.datetime.now().replace(microsecond=0).isoformat()
+        folder, file_ = now.split("T")
+        file_ = file_.replace(":", "_")
+        return os.path.join(prefix, folder, file_ + postfix)
 
-def auto_name_image(prefix=None, postfix=None):
-    import datetime, os
-    now = datetime.datetime.now().replace(microsecond=0).isoformat()
-    folder, file_ = now.split("T")
-    file_ = file_.replace(":", "_")
-    return os.path.join(prefix, folder, file_ + postfix)
+    extension = '.jpg'
+    current_quality = camera.get_current_config('imagequality')
+    if current_quality in ('3', '4', '5', '6', 'RAW', "RAW+JPEG"):
+        extension = '.arw'
+    return auto_name_image(prefix="./images/", postfix=extension)
+
 
 
 def process_rig_arguments(args):
@@ -309,13 +316,10 @@ def main():
         config = camera.get_current_config(opts.get_config)
         print config
 
+    # Sets filename in case user did't do it.
     if opts.capture == "auto":
-        extension = '.jpg'
-        current_quality = camera.get_current_config('imagequality')
-        if current_quality in ('3', '4', '5', '6', 'RAW', "RAW+JPEG"):
-            extension = '.arw'
-        opts.capture = auto_name_image(prefix="./images/", postfix=extension)
-
+        opts.capture = mock_auto_filename(camera)
+        
     # Sets camera shooting properties:
     if opts.shutter:
         camera.set_shutter(opts.shutter)
@@ -404,24 +408,21 @@ def main():
             fov = focals[zoom_level]['fov']
             print "\tclosest match: " + str(fov)
             print "%s wide panorama x %s: " % (h_spread, fov)
-            colums = int(math.ceil(float(h_spread) / fov))
-            print "\tcolums %s, rows: %s" % (colums, 1)
+            colums = int(math.ceil(float(h_spread) / (fov / 3)))
+            print "\tcolums %s, rows: %s (including 30% overlap)" % (colums, 1)
 
             # Compute rig movements:
             y_start_pos = - float(h_spread) / 2
             h_move      = fov / 3
             rig.rotate('y', y_start_pos)
-            filename = 'auto'
+            filename = mock_auto_filename(camera)
             for photo in range(colums):
                 print "Making picture:"
                 output, error = camera.capture_and_download_to_PI(filename)
                 print "Moving rig for next %s" % h_move
+                print "Rig Y at %s, X at %s" % (rig.log['state']['y'], rig.log['state']['x'])
                 rig.rotate('y', h_move)
                 
-
-
-
-
 
 
 
