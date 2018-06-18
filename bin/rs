@@ -363,8 +363,7 @@ def main():
         if opts.capture:
             comment_filename = os.path.splitext(opts.capture)[0]
         elif opts.panorama:
-            comment_filename = mock_auto_filename(camera, prefix=RS_IMAGES,
-                    appendix=opts.label)
+            comment_filename = mock_auto_filename(camera, prefix=RS_IMAGES,appendix=opts.label)
         with open(comment_filename + ".json", 'w') as file:
             json.dump(comment, file, indent=4)
 
@@ -379,8 +378,9 @@ def main():
         pano = Panoramic(camera, rig)
         # What was chosen has to be corrected for current lenses:
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
+        pano_filename = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
         if pano.set_camera_into_start_position(settings):
-            pano.make_panorama(label=opts.label)
+            pano.make_panorama(pano_filename)
 
 
     # We need this per lens writen to file and specified oin global variables
