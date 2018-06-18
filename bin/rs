@@ -382,8 +382,8 @@ def main():
         if 'x' in opts.panorama:
             # Options:
             spreads, res = opts.panorama.split(",")
-            h_spread, v_spread = spreads.split("-")
-            resx, resy = res.split("x")
+            h_spread, v_spread = [float(x) for x in spreads.split("-")]
+            resx, resy = [int(x) for x in res.split("x")]
             h_angle    = float(h_spread) / float(resx)
             zoom_level = -1
             # What was chosen has to be corrected for current lenses:
@@ -404,11 +404,11 @@ def main():
             fov = focals[zoom_level]['fov']
             print "\tclosest match: " + str(fov)
             print "%s wide panorama x %s: " % (h_spread, fov)
-            colums = math.ceil(float(h_spread) / fov)
+            colums = int(math.ceil(float(h_spread) / fov))
             print "\tcolums %s, rows: %s" % (colums, 1)
 
             # Compute rig movements:
-            y_start_pos = - h_spread / 2
+            y_start_pos = - float(h_spread) / 2
             h_move      = fov / 3
             rig.rotate('y', y_start_pos)
             filename = 'auto'
@@ -416,7 +416,7 @@ def main():
                 print "Making picture:"
                 output, error = camera.capture_and_download_to_PI(filename)
                 print "Moving rig for next %s" % h_move
-                rig.move('y', h_move)
+                rig.rotate('y', h_move)
                 
 
 
