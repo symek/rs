@@ -118,15 +118,16 @@ class Panoramic(object):
             
         file, ext = splitext(filename)
         hstep     = details['hstep']
+        vstep     = details['vstep']
         direction = 1
-        for row in range(details['rows'])
+        for row in range(details['rows']):
             for col in range(details['colums']):
                 filename = file + "_part_" + str(col) + ext
                 print "Making picture: %s" % filename
                 output, error = self.camera.capture_image(filename)
                 print "Moving rig for next %s" % hstep
                 print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
-                self.rig.rotate('y', hstep)
+                self.rig.rotate('y', hstep*direction)
             direction *= -1
-            self.rig.rotate('x', vstep*direction)
+            self.rig.rotate('x', vstep)
         
