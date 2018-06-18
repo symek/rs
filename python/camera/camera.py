@@ -112,9 +112,22 @@ class Camera(object):
         command = command.split()
         return self.commander.open_pipe(command)
 
-    def capture_image(self, filename, download=False):
+    def capture_image(self, filename, download=False, hdri=False):
         """ Switcher to select between two policies.
         """
+        from os.path import splitext
+        if hdri:
+            results = []
+            hdri_steps = range(-hdri, hdri)
+            for step in hdri_steps:
+                self.set_exposure_compensation(step)
+                file_, ext = splitext(filename)
+                file_ = file_ + str(step) + ext
+                output, error = self.capture_image(file_, download, hdri=False)
+                results += [(output, error)]
+            self.set_exposure_compensation(0)
+            return results
+
         if not download:
             return self.capture_and_leave_on_device(filename)
         else:
