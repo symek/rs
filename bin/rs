@@ -67,8 +67,8 @@ def parseOptions(argv):
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
     parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
-    parser.add_option("",   "--low", dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)")
-        
+    parser.add_option("",   "--low", dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)") 
+    parser.add_option("",   "--high", dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -310,7 +310,7 @@ def main():
     if opts.lowquality:
         camera.set_config("imagequality", '0')
         camera.set_config("imagesize", '2')
-    else:
+    if opts.highquality:
         camera.set_config("imagequality", '3')
         camera.set_config("imagesize", '0')
 
