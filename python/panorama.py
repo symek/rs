@@ -8,10 +8,11 @@ class Panoramic(object):
     PANO_LEFT     = 1
     PANO_RIGHT    = 2
     pano_start_at = PANO_LEFT
-    def __init__(self, camera, rig, aspect_ratio=.66666666666):
+    def __init__(self, camera, rig, aspect_ratio=.66666666666, overlap=.333333333):
         self.camera       = camera
         self.rig          = rig
         self.aspect_ratio = aspect_ratio
+        self.overlap      = overlap
         self.focals       = None
 
     def __load_lens_calibration(self, lensfile):
@@ -107,17 +108,25 @@ class Panoramic(object):
         return True
 
 
-    def make_panorama(self, filename):
-        """
+    def make_panorama(self, filename, details=None, dowload=False):
+        """ Perform pan capture based on previously computed details.
         """
         from os.path import splitext
+
+        if not details:
+            details = self.pano_details
+            
         file, ext = splitext(filename)
-        hstep = self.pano_details['hstep']
-        for photo in range(self.pano_details['colums']):
-            filename = file + "_part_" + str(photo) + ext
-            print "Making picture: %s" % filename
-            output, error = self.camera.capture_and_download_to_PI(filename)
-            print "Moving rig for next %s" % hstep
-            print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
-            self.rig.rotate('y', hstep)
+        hstep     = details['hstep']
+        direction = 1
+        for row in range(details['rows'])
+            for col in range(details['colums']):
+                filename = file + "_part_" + str(col) + ext
+                print "Making picture: %s" % filename
+                output, error = self.camera.capture_image(filename)
+                print "Moving rig for next %s" % hstep
+                print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
+                self.rig.rotate('y', hstep)
+            direction *= -1
+            self.rig.rotate('x', vstep*direction)
         
