@@ -380,6 +380,7 @@ def main():
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
         pano_filename = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
         if pano.set_camera_into_start_position(settings):
+            print "Start making pano..."
             pano.make_panorama(pano_filename)
 
 
