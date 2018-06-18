@@ -326,7 +326,7 @@ def main():
 
     # Capture the image:
     if opts.capture:
-        output, error = camera.capture_and_download_to_PI(opts.capture)
+        output, error = camera.capture_image(opts.capture)
         if error:
             print error
         print output
