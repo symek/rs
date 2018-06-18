@@ -98,15 +98,16 @@ class Panoramic(object):
         return True
 
 
-    def make_panorama(self, label="pano_"):
+    def make_panorama(self, filename):
         """
         """
-        from utility import mock_auto_filename
+        from os.path import splitext
+        file, ext = splitext(filename)
         hstep = self.pano_details['hstep']
         for photo in range(self.pano_details['colums']):
-            filename = mock_auto_filename(self.camera, appendix=label)
+            filename = file + str(photo) + ext
             print "Making picture: %s" % filename
-            output, error = camera.capture_and_download_to_PI(filename)
+            output, error = self.camera.capture_and_download_to_PI(filename)
             print "Moving rig for next %s" % hstep
             print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
             self.rig.rotate('y', hstep)
