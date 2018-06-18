@@ -14,7 +14,6 @@ class Panoramic(object):
         self.aspect_ratio = aspect_ratio
         self.overlap      = overlap
         self.focals       = None
-        self.hdri         = hdri
 
     def __load_lens_calibration(self, lensfile):
         from json import load
