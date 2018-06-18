@@ -76,7 +76,7 @@ def parseOptions(argv):
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
     parser.add_option("",   "--low",   dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)") 
     parser.add_option("",   "--high",  dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
-    parser.add_option("-l", "--label", dest="lebel", action="store", default=False, help="Add label to image filename.")
+    parser.add_option("-l", "--label", dest="label", action="store", default=False, help="Add label to image filename.")
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -244,6 +244,7 @@ def main():
     from gpio.rig import Rig
     from shell import ShellCommander
     from panorama import Panoramic
+    from utility import mock_auto_filename
     
     # Command line
     opts, args, parser = parseOptions(sys.argv[1:])
@@ -299,7 +300,7 @@ def main():
 
     # Sets filename in case user did't do it.
     if opts.capture == "auto":
-        opts.capture = mock_auto_filename(camera)
+        opts.capture = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
         
 
     # Sets camera shooting properties:
@@ -354,7 +355,6 @@ def main():
 
 
     # Saves a comment:
-    from utility import mock_auto_filename
     if opts.comment:
         now     = datetime.datetime.now().replace(microsecond=0)
         comment = {'date': now.isoformat(), 'comment': opts.comment,
