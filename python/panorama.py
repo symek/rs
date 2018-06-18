@@ -70,7 +70,7 @@ class Panoramic(object):
             print "\tcolums %s, rows: %s (including 30 percent overlap)" % (colums, rows)
 
          # Compute rig movements:
-        hstep, vstep = (fov/3, fovv/3)
+        hstep, vstep = (fov/3, -fovv/3)
         y_start_pos, x_start_pos = (0, 0)
         if self.pano_start_at == self.PANO_CENTER:
             y_start_pos, x_start_pos = (-float(hangle)/2, -float(vangle)/2)
@@ -122,7 +122,7 @@ class Panoramic(object):
         direction = 1
         for row in range(details['rows']):
             for col in range(details['colums']):
-                filename = file + "_part_" + str(col) + ext
+                filename = file + "_part_" + str(row*details['colums']+col) + ext
                 print "Making picture: %s" % filename
                 output, error = self.camera.capture_image(filename)
                 print "Moving rig for next %s" % hstep
