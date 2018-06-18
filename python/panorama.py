@@ -49,7 +49,7 @@ class Panoramic(object):
         tmp = 1000000
         # Choose the closest match
         for zoom in self.focals:
-            error = abs(float(self.focals[zoom]['fov']) - hangle)
+            error = abs(float(self.focals[zoom]['fov']) - fov)
             if  error < tmp:
                 tmp = error
                 zoom_level = zoom
@@ -105,7 +105,7 @@ class Panoramic(object):
         file, ext = splitext(filename)
         hstep = self.pano_details['hstep']
         for photo in range(self.pano_details['colums']):
-            filename = file + str(photo) + ext
+            filename = file + "_part_" + str(photo) + ext
             print "Making picture: %s" % filename
             output, error = self.camera.capture_and_download_to_PI(filename)
             print "Moving rig for next %s" % hstep
