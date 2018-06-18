@@ -112,7 +112,7 @@ class Camera(object):
         command = command.split()
         return self.commander.open_pipe(command)
 
-    def capture_image(filename, download=False):
+    def capture_image(self, filename, download=False):
         """ Switcher to select between two policies.
         """
         if not download:
