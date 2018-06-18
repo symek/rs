@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os, time, sys, re
+import os, time, sys, re, math
 from multiprocessing import Process
 import threading, datetime, json
 
@@ -259,6 +259,10 @@ def calibrate_lens(lens_name, camera, rig, angular_length=37):
     return True
 
 
+def make_panorama(options, camera, rig):
+    pass
+
+
 def main():
     """ Main. Parse commnd lines, sets camera config first, then executes shoot. 
     """
@@ -367,30 +371,57 @@ def main():
         with open(commentfilename + ".json", 'w') as file:
             json.dump(comment, file, indent=4)
 
-
     if opts.panorama:
         rig = Rig()
         zoom_angle = rig.log['state']['zoom']
         with open("Sony28-70calibration.json") as file:
             focals = json.load(file)
-            print focals
 
         # 'x' means that user expresses himself 
         # in term of brackes: 180-0,10x1
         if 'x' in opts.panorama:
+            # Options:
             spreads, res = opts.panorama.split(",")
             h_spread, v_spread = spreads.split("-")
             resx, resy = res.split("x")
             h_angle    = float(h_spread) / float(resx)
             zoom_level = -1
-            print h_angle
+            # What was chosen has to be corrected for current lenses:
+            print "Requested panorama details: "
+            print "\thorizontal spread: %s" % h_spread
+            print "\tvertical spread: %s" % v_spread
+            print "\tcolumns: %s, rows: %s" % (resx, resy)
+            print "\tinitial request for focal setting: " + str(h_angle)
+            print "\tlooking for options...."
             tmp = 1000000
+            # Choose the closest match
             for zoom in focals:
                 error = abs(float(focals[zoom]['fov']) - h_angle)
                 if  error < tmp:
+                    tmp = error
                     zoom_level = zoom
-            print zoom_level,
-            print focals[zoom_level]
+
+            fov = focals[zoom_level]['fov']
+            print "\tclosest match: " + str(fov)
+            print "%s wide panorama x %s: " % (h_spread, fov)
+            colums = math.ceil(float(h_spread) / fov)
+            print "\tcolums %s, rows: %s" % (colums, 1)
+
+            # Compute rig movements:
+            y_start_pos = - h_spread / 2
+            h_move      = fov / 3
+            rig.rotate('y', y_start_pos)
+            filename = 'auto'
+            for photo in range(colums):
+                print "Making picture:"
+                output, error = camera.capture_and_download_to_PI(filename)
+                print "Moving rig for next %s" % h_move
+                rig.move('y', h_move)
+                
+
+
+
+
 
 
 
