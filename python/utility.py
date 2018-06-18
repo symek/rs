@@ -1,7 +1,7 @@
 
 
 
-def mock_auto_filename(camera, prefix, postfix=None, appendix=None):
+def mock_auto_filename(camera, prefix=None, postfix=None, appendix=None):
     """ Creates filename from date and time. 
     """
     def auto_name_image(prefix=None, appendix=None, postfix=None):
@@ -9,7 +9,9 @@ def mock_auto_filename(camera, prefix, postfix=None, appendix=None):
         now = datetime.datetime.now().replace(microsecond=0).isoformat()
         folder, file_ = now.split("T")
         file_ = file_.replace(":", "_")
-        return os.path.join(prefix, folder, appendix+file_ + postfix)
+        if appendix:
+            file_ = appendix+file_
+        return os.path.join(prefix, folder, file_ + postfix)
 
     extension = '.jpg'
     current_quality = camera.get_current_config('imagequality')

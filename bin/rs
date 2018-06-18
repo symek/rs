@@ -29,7 +29,7 @@ if not RS_IMAGES:
 
 
 RS_REMOTE=None
-RS_LENS_FILE = "Sony28-70calibration.json"
+RS_LENS_FILE = os.path.join(RS_ROOT, "Sony28-70calibration.json")
 
 
 try:
@@ -76,7 +76,7 @@ def parseOptions(argv):
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
     parser.add_option("",   "--low",   dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)") 
     parser.add_option("",   "--high",  dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
-    parser.add_option("-l", "--label", dest="label", action="store", default=False, help="Add label to image filename.")
+    parser.add_option("-l", "--label", dest="label", action="store", default=None, help="Add label to image filename.")
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -363,7 +363,8 @@ def main():
         if opts.capture:
             comment_filename = os.path.splitext(opts.capture)[0]
         elif opts.panorama:
-            comment_filename = mock_auto_filename(camera, appendix=opts.lebel)
+            comment_filename = mock_auto_filename(camera, prefix=RS_IMAGES,
+                    appendix=opts.label)
         with open(comment_filename + ".json", 'w') as file:
             json.dump(comment, file, indent=4)
 
@@ -379,7 +380,7 @@ def main():
         # What was chosen has to be corrected for current lenses:
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
         if pano.set_camera_into_start_position(settings):
-            pano.make_panorama(lebel=opts.lebel)
+            pano.make_panorama(label=opts.label)
 
 
     # We need this per lens writen to file and specified oin global variables
