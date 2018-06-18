@@ -67,6 +67,7 @@ def parseOptions(argv):
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
     parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
+    parser.add_option("",   "--low", dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)")
         
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
@@ -303,6 +304,17 @@ def main():
     # Camera setup
     from camera.sony import A7 as Camera
     camera = Camera()
+
+    # Fast track to sets low/fast quality images, 
+    # it cam be overwriten with --set-config anyway.:
+    if opts.lowquality:
+        camera.set_config("imagequality", '0')
+        camera.set_config("imagesize", '2')
+    else:
+        camera.set_config("imagequality", '3')
+        camera.set_config("imagesize", '0')
+
+
 
     # Sets arbitrary config (basic gphoto2 wrapper).
     if opts.set_config:
