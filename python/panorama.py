@@ -99,7 +99,7 @@ class Panoramic(object):
     def make_panorama(self, lebel="pano_"):
         """
         """
-        from utility impor mock_auto_filename
+        from utility import mock_auto_filename
         for photo in range(self.pano_details['colums']):
             filename = mock_auto_filename(camera, appendix=lebel)
             print "Making picture: %s" % filename
