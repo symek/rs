@@ -55,35 +55,35 @@ class Panoramic(object):
         # Choose the closest match
         for zoom in self.focals:
             error = abs(float(self.focals[zoom]['fov']) - fov)
-            if  error < tmp:
+            if  error <= tmp:
                 tmp = error
                 zoom_level = zoom
 
         fov  = self.focals[zoom_level]['fov']
         fovv = self.focals[zoom_level]['fov'] * self.aspect_ratio
-        colums = int(ceil(float(hangle) / (fov  / 3)))
-        rows   = int(ceil(float(vangle) / (fovv / 3)))
+        colums = int(ceil(float(hangle) / (fov  * self.overlap)))
+        rows   = int(ceil(float(vangle) / (fovv * self.overlap)))
         
         if verbose:
             print "\tclosest match: " + str(fov)
             print "%s wide panorama x %s: " % (hangle, fov)
-            print "\tcolums %s, rows: %s (including 30 percent overlap)" % (colums, rows)
+            print "\tcolums %s, rows: %s (including %s overlap)" % (colums, rows, self.overlap)
 
          # Compute rig movements:
-        hstep, vstep = (fov/3, -fovv/3)
+        hstep, vstep = (fov * self.overlap, -fovv * self.overlap)
         y_start_pos, x_start_pos = (0, 0)
         if self.pano_start_at == self.PANO_CENTER:
             y_start_pos, x_start_pos = (-float(hangle)/2, -float(vangle)/2)
         elif self.pano_start_at == self.PANO_RIGHT:
             y_start_pos, x_start_pos = (float(hangle)/2, float(vangle)/2)
-            hstep, vstep             = (-fov/3, -fovv/3)
+            hstep, vstep             = (-fov * self.overlap, -fovv * self.overlap)
 
         zoom_degrees = float(zoom_level) - self.rig.log['state']['zoom']
         new_zoom = self.rig.log['state']['zoom']
         new_fov  = self.focals[str(int(new_zoom))]
 
-        if verbose:
-            print "New lenses: " + str(new_fov)
+        #if verbose:
+        #    print "New lenses: " + str(new_fov)
 
         self.pano_details = {'colums': colums, 'rows': rows, 
                             'x_start_pos': x_start_pos, 
@@ -101,6 +101,7 @@ class Panoramic(object):
         if not details:
             details = self.pano_details
         req_zoom = details['zoom']
+        print "Proposed zoom setting: " + str(self.focals[req_zoom])
         new_zoom = float(req_zoom) - self.rig.log['state']['zoom']
         self.rig.rotate('zoom', new_zoom)
         self.rig.rotate('y',    details['y_start_pos'])

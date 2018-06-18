@@ -64,7 +64,8 @@ def parseOptions(argv):
     parser.add_option("",   "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
     parser.add_option("",   "--exp-comp",   dest="exposure_compensation",     action="store",   default=0,  help="Sets exposure compensation.")
     parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image: 10x5 (horizontal x vertical shots)")
-    parser.add_option("",   "--rotate",     dest="rotate",  action="store", type="int",    default=0,       help="Rotate the image.")
+    parser.add_option("",   "--rotate",     dest="rotate",  action="store",   type="int",    default=0,       help="Rotate the image.")
+    parser.add_option("-o", "--overlap",    dest="overlap", action="store",  type="float",  default=.333333,  help="Overlap for panoramic images. Default .3333 ")
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
     parser.add_option("",   "--set-config", dest="set_config",  action="store", default=None,                   help="Sets various camera settings.")
     parser.add_option("",   "--get-config", dest="get_config",  action="store", default=None,               help="Gets various camera settings.")
@@ -375,7 +376,7 @@ def main():
         angles = [float(x) for x in spreads.split("-")]
         images = [int(x) for x in res.split("x")]
         rig  = Rig()
-        pano = Panoramic(camera, rig)
+        pano = Panoramic(camera, rig, overlap=opts.overlap)
         # What was chosen has to be corrected for current lenses:
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
         pano_filename = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
