@@ -108,7 +108,7 @@ class Panoramic(object):
         return True
 
 
-    def make_panorama(self, filename, details=None, dowload=False):
+    def make_panorama(self, filename, details=None, download=False):
         """ Perform pan capture based on previously computed details.
         """
         from os.path import splitext
@@ -124,7 +124,7 @@ class Panoramic(object):
             for col in range(details['colums']):
                 filename = file + "_part_" + str(row*details['colums']+col) + ext
                 print "Making picture: %s" % filename
-                output, error = self.camera.capture_image(filename)
+                output, error = self.camera.capture_image(filename, download=download)
                 print "Moving rig for next %s" % hstep
                 print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
                 self.rig.rotate('y', hstep*direction)
