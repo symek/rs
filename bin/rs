@@ -167,21 +167,22 @@ def compute_hdri(fstops=5):
         set_fstop(current_fstop+1)
         capture_and_download(filename, 0)
 
-def mock_auto_filename(camera):
+def mock_auto_filename(camera, appendix=None):
     """ Creates filename from date and time. 
     """
-    def auto_name_image(prefix=None, postfix=None):
+    def auto_name_image(prefix=None, appendix=None, postfix=None):
         import datetime, os
         now = datetime.datetime.now().replace(microsecond=0).isoformat()
         folder, file_ = now.split("T")
         file_ = file_.replace(":", "_")
-        return os.path.join(prefix, folder, file_ + postfix)
+        return os.path.join(prefix, folder, appendix+file_ + postfix)
 
     extension = '.jpg'
     current_quality = camera.get_current_config('imagequality')
     if current_quality in ('3', '4', '5', '6', 'RAW', "RAW+JPEG"):
         extension = '.arw'
-    return auto_name_image(prefix="./images/", postfix=extension)
+
+    return auto_name_image(prefix=RS_IMAGES, appendix=appendix,  postfix=extension)
 
 
 
@@ -421,15 +422,22 @@ def main():
             print "\tclosest match: " + str(fov)
             print "%s wide panorama x %s: " % (h_spread, fov)
             colums = int(math.ceil(float(h_spread) / (fov / 3)))
-            print "\tcolums %s, rows: %s (including 30% overlap)" % (colums, 1)
+            print "\tcolums %s, rows: %s (including 30 percent overlap)" % (colums, 1)
 
             # Compute rig movements:
             y_start_pos = - float(h_spread) / 2
             h_move      = fov / 3
+            zoom_degrees = float(zoom_level) -  rig.log['state']['zoom']
+            print "Moving zoom %s degrees "  % zoom_degrees
+            rig.rotate('zoom', zoom_degrees)
+            new_zoom = rig.log['state']['zoom']
+            new_fov  = focals[str(int(new_zoom))]
+            print "New lenses: ",
+            print new_fov
             rig.rotate('y', y_start_pos)
-            filename = mock_auto_filename(camera)
             for photo in range(colums):
-                print "Making picture:"
+                filename = mock_auto_filename(camera, appendix="pano_")
+                print "Making picture: %s" % filename
                 output, error = camera.capture_and_download_to_PI(filename)
                 print "Moving rig for next %s" % h_move
                 print "Rig Y at %s, X at %s" % (rig.log['state']['y'], rig.log['state']['x'])
