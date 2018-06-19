@@ -75,6 +75,15 @@ class Camera(object):
     def turn_off(self):
         return self._turn_on_off("OFF")
 
-
+    def check_for_camera(self):
+        """ Looks for respond of camera. 
+        """
+        from shell import ShellCommander
+        commander = ShellCommander()
+        command = ["gphoto2", "--summary"]
+        out, err = commander.open_pipe(command)
+        if err:
+            return False
+        return True
 
 
