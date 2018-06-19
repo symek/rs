@@ -3,7 +3,7 @@
 def mock_auto_filename(camera, prefix, appendix,  postfix=None):
     """ Creates filename from date and time. 
     """
-    def auto_name_image(prefix=None, appendix=None, postfix=None):
+    def auto_name_image(prefix, postfix, appendix=""):
         import datetime, os
         now = datetime.datetime.now().replace(microsecond=0).isoformat()
         folder, file_ = now.split("T")

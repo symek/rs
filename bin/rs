@@ -77,7 +77,7 @@ def parseOptions(argv):
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
     parser.add_option("",   "--low",   dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)") 
     parser.add_option("",   "--high",  dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
-    parser.add_option("-l", "--label", dest="label", action="store", default=None, help="Add label to image filename.")
+    parser.add_option("-l", "--label", dest="label", action="store", default="", help="Add label to image filename.")
     parser.add_option("",   "--hdri",  dest="hdri", action="store", type='int', default=None, help="Enables HDRI capture. 2,3,5 +/-")
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
