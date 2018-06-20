@@ -3,7 +3,8 @@ import time, datetime
 
 DEFAULT_POWER = 1
 RESCUE_MODE   = 0
-
+DEFAULT_TIME_TICK = 0.0000001
+SLOWDOWN = 20
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
     OUT = None
@@ -131,11 +132,13 @@ class Rig(object):
         GPIO.output(self.axis[axe][1].number, sign)
 
         for step in range(int(range_)):
-            sleep = 0.000001
+            sleep = DEFAULT_SLEEP_PERIOD
             GPIO.output(self.axis[axe][0].number, GPIO.HIGH)
-            time.sleep(sleep)
+            for t in range(SLOWDOWN):
+                time.sleep(sleep)
             GPIO.output(self.axis[axe][0].number, GPIO.LOW)
-            time.sleep(sleep)
+            for t in range(SLOWDOWN):
+                time.sleep(sleep)
 
         nowiso = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.log['events'] += [{axe: angle, 'date': nowiso}]
