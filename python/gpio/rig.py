@@ -1,10 +1,18 @@
 import sys, os, json
 import time, datetime
+try:
+    import numpy
+except:
+    print "Can't import numpy. Some might not work as expected."
 
 DEFAULT_POWER = 1
 RESCUE_MODE   = 0
 DEFAULT_TIME_TICK = 0.0000001
 SLOWDOWN = 20
+
+RS_MAX_SPEED =  os.getenv("RS_MAX_SPEED", 5)
+RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 20)
+
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
     OUT = None
@@ -17,7 +25,9 @@ class GPIOClass(object):
     def setup(self, pin, mode):
         pass
     def output(self, pin, v):
-        pass
+        # print "pin %s" % pin,
+        print "%s" % ('.'),
+        sys.stdout.flush()
     def cleanup(self):
         pass
 
@@ -40,6 +50,7 @@ except:
     print "Can't find GPIO module. Using dummy one..."
     # sys.exit()
     GPIO = GPIOClass()
+    DEFAULT_SLEEP_PERIOD = 0.01
 
 
 try:
@@ -113,6 +124,20 @@ class Rig(object):
             json.dump(self.log, file, indent=4)
             return True
 
+    def _compute_ticks(self, range_):
+        """
+        """
+        def easeInOutQuad(t):
+            if t<.5:
+                return 2.0*t*t
+            else:
+                return -1.0+(4.0-2.0*t)*t
+        step = 1.0/range_
+        DIV  = MAX_SPEED - MIN_SPEED
+        ticks = [MIN_SPEED + int(DIV*easeInOutQuad(x*step)) for x in xrange(range_)]
+        return ticks
+
+
     def rotate(self, axe, angle):
         """
         """
@@ -131,19 +156,22 @@ class Rig(object):
         assert axe in self.axis
         GPIO.output(self.axis[axe][1].number, sign)
 
+        timeticks = self._compute_ticks(int(range_))
         for step in range(int(range_)):
             sleep = DEFAULT_SLEEP_PERIOD
             GPIO.output(self.axis[axe][0].number, GPIO.HIGH)
-            for t in range(SLOWDOWN):
+            for t in range(timeticks[step]):
                 time.sleep(sleep)
             GPIO.output(self.axis[axe][0].number, GPIO.LOW)
-            for t in range(SLOWDOWN):
+            for t in range(timeticks[step]):
                 time.sleep(sleep)
 
         nowiso = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.log['events'] += [{axe: angle, 'date': nowiso}]
         self.log['state'][axe] += angle
         self._update_log()
+
+
 
     def get_power_status(self):
         return pijuice.status.GetStatus() # Read PiJuice staus.
