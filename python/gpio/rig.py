@@ -9,9 +9,9 @@ DEFAULT_POWER = 1
 RESCUE_MODE   = 0
 DEFAULT_TIME_TICK = 0.0000001
 SLOWDOWN = 20
-
+RS_SLOW_THRESHOLD = os.getenv("RS_SLOW_THRESHOLD", 10)
 RS_MAX_SPEED =  os.getenv("RS_MAX_SPEED", 10)
-RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 25)
+RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 35)
 
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
@@ -179,7 +179,10 @@ class Rig(object):
             if axes[axe]:
                 _range = self.angle * abs(axes[axe])
                 _range = _range + self.angle*abs(axes[axe])*.007333333
-                _ticks = [(self.axis[axe][0].number, tick) for tick in self._compute_ticks(int(_range))]
+                if abs(axes[axe]) > RS_SLOW_THRESHOLD:
+                    _ticks = [(self.axis[axe][0].number, tick) for tick in self._compute_ticks(int(_range))]
+                else:
+                    _ticks = [(self.axis[axe][0].number,RS_MIN_SPEED)] * int(_range)
                 ticks.append(_ticks)
             else:
                 ticks.append([])
