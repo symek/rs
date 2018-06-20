@@ -62,8 +62,9 @@ def parseOptions(argv):
     parser.add_option("",   "--shutter",    dest="shutter", action="store",   default=None,  help="Sets shutter speed.")
     parser.add_option("",   "--fstop",      dest="fstop",   action="store",   default=None,  help="Sets fstop of camera.")
     parser.add_option("",   "--iso",        dest="iso",     action="store",   default=None,  help="Sets ISO of camera.")
-    parser.add_option("",   "--exp-comp",   dest="exposure_compensation",     action="store",   default=0,  help="Sets exposure compensation.")
-    parser.add_option("-P", "--panorama",   dest="panorama",action="store",   default=None,  help="Creates panoramic image: 10x5 (horizontal x vertical shots)")
+    parser.add_option("",   "--over-exp",   dest="exposure_compensation",     action="store",   default=0,  help="Sets exposure compensation.")
+    parser.add_option("",   "--center",     dest="pano_center",action="store",   default=1,  help="Where to start panorama: 0 for center, 1 for left(default), 2 for right")
+    parser.add_option("-P","--panorama",     dest="panorama",  action="store",   default=None,  help="Creates panoramic image: 180-90,10x5 (Angle-Angle,ImagexImage (estimated)")
     parser.add_option("",   "--rotate",     dest="rotate",  action="store",   type="int",    default=0,       help="Rotate the image.")
     parser.add_option("-o", "--overlap",    dest="overlap", action="store",  type="float",  default=.333333,  help="Overlap for panoramic images. Default .3333 ")
     parser.add_option("",   "--resize",     dest="resize",  action="store", type="float",  default=1.0,     help="Resize the image.")
@@ -391,6 +392,7 @@ def main():
         images = [int(x) for x in res.split("x")]
         rig  = Rig()
         pano = Panoramic(camera, rig, overlap=opts.overlap)
+        pano.pano_start_at = opts.pano_center
         # What was chosen has to be corrected for current lenses:
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
         pano_filename = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
