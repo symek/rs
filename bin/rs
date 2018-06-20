@@ -81,6 +81,7 @@ def parseOptions(argv):
     parser.add_option("",   "--hdri",  dest="hdri", action="store", type='int', default=None, help="Enables HDRI capture. 2,3,5 +/-")
     parser.add_option("-b", "--back",  dest="move_back_after_pano", action="store_true", default=False, help="Move head back after pano into old position")
     parser.add_option("-t", "--turn",   dest="turn_on_off", action="store_true", default=False, help="Puts camera into a sleep mode, or weaks it up.") 
+    parser.add_option("",   "--rotate-all",   dest="rotate_all_at_once", action="store_true", default=True, help="Rotate head around all axies at once (testing).") 
 
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
@@ -265,14 +266,23 @@ def main():
     # Rig operations. cmd arg can be one, two or three numbers
     # separated with ,
     if opts.move_rig: 
-        axies = process_rig_arguments(opts.move_rig)
+        axes = process_rig_arguments(opts.move_rig)
         rig = Rig()
-        rig.rotate('y', axies[0])
-        rig.rotate('x', axies[1])
-        rig.rotate('zoom', axies[2])
+        # TODO: test for  moving all together.
+        if opts.rotate_all_at_once:
+            # TODO: test for  moving all together.
+            n = {'y':    axes[0], 
+                 'x':    axes[1], 
+                 'zoom': axes[2]}
+            rig.rotate_all(n)
+        else:
+            rig.rotate('y', axies[0])
+            rig.rotate('x', axies[1])
+            rig.rotate('zoom', axies[2])
+
         if opts.reset_rig:
             print "Reseting rig memory:", 
-            print rig.force_state(*axies)
+            print rig.force_state(*axes)
 
 
     # Camera setup

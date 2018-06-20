@@ -1,5 +1,7 @@
 
 
+RS_ROTATE_ALL=True
+
 class Panoramic(object):
     """ Simplifies sequential shooting. 
     """
@@ -99,7 +101,7 @@ class Panoramic(object):
         return self.pano_details
 
 
-    def move_to_start_position(self, details=None, verbose=True):
+    def move_to_start_position(self, details=None, verbose=True, rotate_all=RS_ROTATE_ALL):
         """
         """
         if not details:
@@ -111,12 +113,17 @@ class Panoramic(object):
             print "Proposed zoom setting: " + str(self.focals[req_zoom])
             print "Movig rig to: y: %s, x: %s" % (details['y_start_pos'],  details['x_start_pos'])
 
-        self.rig.rotate('zoom', new_zoom)
-        self.rig.rotate('y',    details['y_start_pos'])
-        self.rig.rotate('x',    details['x_start_pos'])
+        if rotate_all:
+            self.rig.rotate_all({'y': details['y_start_pos'], 
+                                 'x': details['x_start_pos'],
+                                 'zoom': new_zoom})
+        else:
+            self.rig.rotate('zoom', new_zoom)
+            self.rig.rotate('y',    details['y_start_pos'])
+            self.rig.rotate('x',    details['x_start_pos'])
         return True
 
-    def move_back_after_pano(self, details=None, verbose=True):
+    def move_back_after_pano(self, details=None, verbose=True, rotate_all=RS_ROTATE_ALL):
         """
         """
         if not details:
@@ -128,8 +135,13 @@ class Panoramic(object):
         if verbose:
             print "Moving back to: %s, %s" % (details['y_current_pos'], details['x_current_pos']) 
 
-        self.rig.rotate('y', delta_y)
-        self.rig.rotate('x', delta_x)
+        if rotate_all:
+            self.rig.rotate_all({'y': delta_y, 
+                                 'x': delta_x,
+                                 'zoom': 0})
+        else:
+            self.rig.rotate('y', delta_y)
+            self.rig.rotate('x', delta_x)
         return True   
 
 

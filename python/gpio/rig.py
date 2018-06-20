@@ -10,8 +10,8 @@ RESCUE_MODE   = 0
 DEFAULT_TIME_TICK = 0.0000001
 SLOWDOWN = 20
 
-RS_MAX_SPEED =  os.getenv("RS_MAX_SPEED", 5)
-RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 20)
+RS_MAX_SPEED =  os.getenv("RS_MAX_SPEED", 10)
+RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 25)
 
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
@@ -124,7 +124,7 @@ class Rig(object):
             json.dump(self.log, file, indent=4)
             return True
 
-    def _compute_ticks(self, range_):
+    def _compute_ticks(self, range_, easing='c'):
         """
         """
         def easeInOutQuad(t):
@@ -132,10 +132,92 @@ class Rig(object):
                 return 2.0*t*t
             else:
                 return -1.0+(4.0-2.0*t)*t
-        step = 1.0/range_
-        DIV  = MAX_SPEED - MIN_SPEED
-        ticks = [MIN_SPEED + int(DIV*easeInOutQuad(x*step)) for x in xrange(range_)]
-        return ticks
+
+        def easeInOutCubic(t):
+            if t<.5:
+                return 4*t*t*t
+            else:
+                return (t-1.0)*(2.0*t-2.0)*(2.0*t-2.0)+1.0
+
+        def easeInOutSine(t,b,c,d):
+            from math import cos, pi
+            return -c/2.0 * (cos(pi* t/d) -1.0)+b
+
+        fixodd = False
+        if range_%4:
+            #range_ -= 
+            fixodd = True
+
+        # Dirty I know
+        if easing == 'q':
+            f = easeInOutQuad
+        elif easing == 'c':
+            f = easeInOutCubic
+        elif easing == 's':
+            f = easeInOutSine
+        else:
+            print "Unknown easing functin."
+            return [RS_MIN_SPEED] * range_
+
+        step = 1.0/range_*4
+        div  = RS_MAX_SPEED - RS_MIN_SPEED
+        zero_based_range = range_ / 4
+        ticks_to_half  = [RS_MIN_SPEED + int(div*f(x*step)) for x in xrange(0, zero_based_range)]
+        ticks_to_one   = list(ticks_to_half)
+        ticks_to_one.reverse()
+        ticks_full = [ticks_to_half[-1]]*zero_based_range*2
+        ticks_final = ticks_to_half + ticks_full + ticks_to_one
+        if fixodd:
+            while len(ticks_final) < range_:
+                ticks_final += [RS_MIN_SPEED]
+        return ticks_final
+
+
+    def rotate_all(self, axes):
+        """
+        """
+        signs = []
+        #axes = {'x':angle}
+        axes['x'] *= -1
+        for axe in axes:
+            if axes[axe] < 0:
+                GPIO.output(self.axis[axe][1].number, GPIO.HIGH)
+            else:
+                GPIO.output(self.axis[axe][1].number, GPIO.LOW)
+
+
+        ticks = []
+        for axe in axes:
+            if axes[axe]:
+                _range = self.angle * abs(axes[axe])
+                _range = _range + self.angle*abs(axes[axe])*.007333333
+                _ticks = [(self.axis[axe][0].number, tick) for tick in self._compute_ticks(int(_range))]
+                ticks.append(_ticks)
+            else:
+                ticks.append([])
+
+        limit = 0 
+        for a in ticks:
+            if len(a):
+                limit+= 1
+        limit = 3
+        while(True):
+            counter = 0
+            for axe in ticks:
+                if axe:
+                    tick  = axe.pop()
+                    sleep = DEFAULT_TIME_TICK
+                    GPIO.output(tick[0], GPIO.HIGH)
+                    for t in range(tick[1]):
+                        time.sleep(sleep)
+                    GPIO.output(tick[0], GPIO.LOW)
+                    for t in range(tick[1]):
+                        time.sleep(sleep)
+                else:
+                    counter +=1
+                    if counter == limit:
+                        return
+
 
 
     def rotate(self, axe, angle):
@@ -155,10 +237,16 @@ class Rig(object):
 
         assert axe in self.axis
         GPIO.output(self.axis[axe][1].number, sign)
-
-        timeticks = self._compute_ticks(int(range_))
+        if range_:
+            if abs(angle) > 5:
+                timeticks = self._compute_ticks(int(range_))
+            else:
+                # This is to a lame of our easying functions...
+                timeticks = [RS_MIN_SPEED] * int(range_)
+        else:
+            timeticks = [0]
         for step in range(int(range_)):
-            sleep = DEFAULT_SLEEP_PERIOD
+            sleep = DEFAULT_TIME_TICK
             GPIO.output(self.axis[axe][0].number, GPIO.HIGH)
             for t in range(timeticks[step]):
                 time.sleep(sleep)
