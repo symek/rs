@@ -157,10 +157,14 @@ class Panoramic(object):
         hstep     = details['hstep']
         vstep     = details['vstep']
         direction = 1
-        for row in range(details['rows']):
-            for col in range(details['colums']):
-                filename = file + "_part_" + str(row*details['colums']+col) + ext
-                print "Making picture: %s" % filename
+        rows = details['rows']
+        cols = details['colums']
+        for row in range(rows):
+            for col in range(cols):
+                image_number = row*details['colums']+col
+                filename = file + "_part_" + str(image_number) + ext
+                print "Making panorama image row:%s, col: %s(%s out of %s): %s" \
+                        % (row, col, image_number, rows*cols, filename)
                 output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
                 print "Moving rig for next %s" % hstep
                 print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])

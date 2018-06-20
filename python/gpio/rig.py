@@ -125,36 +125,23 @@ class Rig(object):
             return True
 
     def _compute_ticks(self, range_, easing='c'):
+        """ Computes varible ticks to control serve in head.
+            Sleep has to be small and constant, because timer
+            isn't good enough to give us control. 
         """
-        """
-        def easeInOutQuad(t):
-            if t<.5:
-                return 2.0*t*t
-            else:
-                return -1.0+(4.0-2.0*t)*t
-
-        def easeInOutCubic(t):
-            if t<.5:
-                return 4*t*t*t
-            else:
-                return (t-1.0)*(2.0*t-2.0)*(2.0*t-2.0)+1.0
-
-        def easeInOutSine(t,b,c,d):
-            from math import cos, pi
-            return -c/2.0 * (cos(pi* t/d) -1.0)+b
+        import utility
 
         fixodd = False
         if range_%4:
-            #range_ -= 
             fixodd = True
 
         # Dirty I know
         if easing == 'q':
-            f = easeInOutQuad
+            f = utility.easeInOutQuad
         elif easing == 'c':
-            f = easeInOutCubic
+            f = utility.easeInOutCubic
         elif easing == 's':
-            f = easeInOutSine
+            f = utility.easeInOutSine
         else:
             print "Unknown easing functin."
             return [RS_MIN_SPEED] * range_
@@ -162,7 +149,7 @@ class Rig(object):
         step = 1.0/range_*4
         div  = RS_MAX_SPEED - RS_MIN_SPEED
         zero_based_range = range_ / 4
-        ticks_to_half  = [RS_MIN_SPEED + int(div*f(x*step)) for x in xrange(0, zero_based_range)]
+        ticks_to_half  = [RS_MIN_SPEED + int(div*f(x*step)) for x in xrange(zero_based_range)]
         ticks_to_one   = list(ticks_to_half)
         ticks_to_one.reverse()
         ticks_full = [ticks_to_half[-1]]*zero_based_range*2
@@ -174,7 +161,8 @@ class Rig(object):
 
 
     def rotate_all(self, axes):
-        """
+        """ Interleaves ticks for all axes into a single list, so camera can rotate in
+            all directions at once. Ugly.
         """
         signs = []
         #axes = {'x':angle}
