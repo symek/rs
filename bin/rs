@@ -71,15 +71,17 @@ def parseOptions(argv):
     parser.add_option("",   "--get-config", dest="get_config",  action="store", default=None,               help="Gets various camera settings.")
     parser.add_option("",   "--execute",    dest="execute", action="store", type='string', default=None,   help="Executes arbitrary command.")
     # parser.add_option("",   "--sync",       dest="sync",    action="store_true", default=False, help="Synchronize entire remote folder.")
-    parser.add_option("-d", "--download",   dest="download", action="store_true", default=False,     help="Download the image after capture (only with 'capture' option.")
+    parser.add_option("-d", "--download",   dest="download", action="store_true", default=True,     help="Download the image after capture (only with 'capture' option. THIS SET TO FALSE CRASHES SONY!!!,")
     parser.add_option("-U", "--upload-file",dest="upload_file",   action="store", type='string', default=None,   help="Upload specific file to internet account (Dropbox). ")
     parser.add_option("-u", "--upload",     dest="upload",   action="store_true", default=None,   help="Upload the image to internet account (Dropbox). ")
     parser.add_option("",   "--calibrate-lens", dest="calibrate_lens",   action="store", default=None,   help="Run calibration on lens length, note procedure is dangerous... ")
     parser.add_option("",   "--low",   dest="lowquality", action="store_true", default=False, help="Fast track to set low quality image (for testing)") 
     parser.add_option("",   "--high",  dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
-    parser.add_option("-l", "--label", dest="label", action="store", default=None, help="Add label to image filename.")
+    parser.add_option("-l", "--label", dest="label", action="store", default="", help="Add label to image filename.")
     parser.add_option("",   "--hdri",  dest="hdri", action="store", type='int', default=None, help="Enables HDRI capture. 2,3,5 +/-")
     parser.add_option("-b", "--back",  dest="move_back_after_pano", action="store_true", default=False, help="Move head back after pano into old position")
+    parser.add_option("-t", "--turn",   dest="turn_on_off", action="store_true", default=False, help="Puts camera into a sleep mode, or weaks it up.") 
+
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -395,6 +397,15 @@ def main():
         rig = Rig()
         print calibrate_lens(opts.calibrate_lens, camera, 
             rig, camera.lens.angular_length) 
+
+    # Putting camera into sleep after capturing without download crashes camera
+    # Only removing battery from a body helps (DONT DO THIS!). 
+    if opts.download and opts.turn_on_off:
+        camera.energy.turn_off()
+    elif opts.turn_on_off:
+        if not camera.energy.check_for_camera():
+            camera.energy.turn_on()
+
 
 
     # print o, e
