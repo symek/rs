@@ -115,6 +115,7 @@ class Rig(object):
     def rotate(self, axe, angle):
         """
         """
+        #TODO: Implement rotation LIMITS so that we won't brake cables. 
         # Revert sign for x
         if axe == "x": angle *= -1
         # 

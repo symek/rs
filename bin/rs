@@ -79,6 +79,7 @@ def parseOptions(argv):
     parser.add_option("",   "--high",  dest="highquality", action="store_true", default=False, help="Fast track to set high quality image (for testing)")
     parser.add_option("-l", "--label", dest="label", action="store", default=None, help="Add label to image filename.")
     parser.add_option("",   "--hdri",  dest="hdri", action="store", type='int', default=None, help="Enables HDRI capture. 2,3,5 +/-")
+    parser.add_option("-b", "--back",  dest="move_back_after_pano", action="store_true", default=False, help="Move head back after pano into old position")
     (opts, args) = parser.parse_args(argv)
     return opts, args, parser
 
@@ -381,9 +382,11 @@ def main():
         # What was chosen has to be corrected for current lenses:
         settings = pano.compute_panorama_details(angles, images, RS_LENS_FILE)
         pano_filename = mock_auto_filename(camera, prefix=RS_IMAGES, appendix=opts.label)
-        if pano.set_camera_into_start_position(settings):
-            print "Start making pano..."
+        if pano.move_to_start_position(settings):
+            print "Start making panorama..."
             pano.make_panorama(pano_filename, download=opts.download, hdri=opts.hdri)
+            if opts.move_back_after_pano:
+                pano.move_back_after_pano(settings)
 
 
     # We need this per lens writen to file and specified oin global variables

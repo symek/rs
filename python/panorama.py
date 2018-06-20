@@ -82,31 +82,55 @@ class Panoramic(object):
         new_zoom = self.rig.log['state']['zoom']
         new_fov  = self.focals[str(int(new_zoom))]
 
-        #if verbose:
-        #    print "New lenses: " + str(new_fov)
+        y_current_pos = self.rig.log['state']['y']
+        x_current_pos = self.rig.log['state']['x']
+        current_zoom  = self.rig.log['state']['zoom']
 
         self.pano_details = {'colums': colums, 'rows': rows, 
                             'x_start_pos': x_start_pos, 
                             'y_start_pos': y_start_pos, 
                             'zoom' : zoom_level,
                             'vstep': vstep,
-                            'hstep': hstep }
+                            'hstep': hstep,
+                            'y_current_pos': y_current_pos,
+                            'x_current_pos': x_current_pos,
+                            'current_zoom':  current_zoom}
 
         return self.pano_details
 
 
-    def set_camera_into_start_position(self, details=None):
+    def move_to_start_position(self, details=None, verbose=True):
         """
         """
         if not details:
             details = self.pano_details
         req_zoom = details['zoom']
-        print "Proposed zoom setting: " + str(self.focals[req_zoom])
         new_zoom = float(req_zoom) - self.rig.log['state']['zoom']
+
+        if verbose:
+            print "Proposed zoom setting: " + str(self.focals[req_zoom])
+            print "Movig rig to: y: %s, x: %s" % (details['y_start_pos'],  details['x_start_pos'])
+
         self.rig.rotate('zoom', new_zoom)
         self.rig.rotate('y',    details['y_start_pos'])
         self.rig.rotate('x',    details['x_start_pos'])
         return True
+
+    def move_back_after_pano(self, details=None, verbose=True):
+        """
+        """
+        if not details:
+            detail = self.pano_details
+
+        delta_y = self.rig.log['state']['y'] - details['y_current_pos']
+        delta_x = self.rig.log['state']['x'] - details['x_current_pos']
+
+        if verbose:
+            print "Moving back to: %s, %s" % (details['y_current_pos'], details['x_current_pos']) 
+
+        self.rig.rotate('y', delta_y)
+        self.rig.rotate('x', delta_x)
+        return True   
 
 
     def make_panorama(self, filename, details=None, download=False, hdri=False):
