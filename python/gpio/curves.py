@@ -9,6 +9,14 @@ class CurveEnum(object):
          (0.8474814891815186, 0.2615295648574829),
          (1.0, -0.004779990762472153))
 
+    HAND_MADE_EASY_OUT = ((0.00989831704646349, -0.13058727979660034),
+        (0.06858249008655548, 0.5122683048248291),
+        (0.3006516993045807, 0.31754636764526367),
+        (0.47332537174224854, 1.0058536529541016),
+        (0.5807352662086487, 0.35222336649894714),
+        (0.7727925181388855, 0.2375224083662033),
+        (1.0, -0.004779990762472153))
+
 
 class Curve(object):
     YP = None
@@ -51,7 +59,7 @@ class Curve(object):
         """
         from numpy import polyfit, polyval
         if not curve:        
-            curve = CurveEnum.HAND_MADE_GAUSS
+            curve = CurveEnum.HAND_MADE_EASY_OUT
         X  = [x[0] for x in curve]
         Y  = [y[1] for y in curve]
         step = 1.0/range_
