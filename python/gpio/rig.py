@@ -10,8 +10,8 @@ RESCUE_MODE   = 0
 DEFAULT_TIME_TICK = 0.0000001
 SLOWDOWN = 20
 RS_SLOW_THRESHOLD = os.getenv("RS_SLOW_THRESHOLD", 10)
-RS_MAX_SPEED =  os.getenv("RS_MAX_SPEED", 10)
-RS_MIN_SPEED =  os.getenv("RS_MIN_SPEED", 35)
+RS_MAX_SPEED =  int(os.getenv("RS_MAX_SPEED", 10))
+RS_MIN_SPEED =  int(os.getenv("RS_MIN_SPEED", 35))
 
 # Dummy object replacing real GPIO module
 class GPIOClass(object):
