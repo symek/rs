@@ -149,8 +149,10 @@ class Panoramic(object):
     def make_panorama(self, filename, details=None, download=False, hdri=False):
         """ Perform pan capture based on previously computed details.
         """
+        def misc(cols, rows, col, row, filename, log ):
+            pass
+
         from os.path import splitext
-        #from threading import Thread
 
         if not details:
             details = self.pano_details
@@ -161,23 +163,26 @@ class Panoramic(object):
         direction = 1
         rows = details['rows']
         cols = details['colums']
-        worker = None
+        _col = 0 
         for row in range(rows):
-            for col in range(cols):
+            image_number = row*details['colums']+_col
+            filename = file + "_part_" + str(image_number) + ext
+            print "Making panorama image row:%s, col: %s(%s out of %s): %s" \
+                    % (row, _col, image_number, rows*cols, filename)
+            output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
+            print "Moving rig for next %s" % hstep
+            print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
+            for col in range(cols-1):
+                _col = col
+                self.rig.rotate('y', hstep*direction)
                 image_number = row*details['colums']+col
                 filename = file + "_part_" + str(image_number) + ext
                 print "Making panorama image row:%s, col: %s(%s out of %s): %s" \
                         % (row, col, image_number, rows*cols, filename)
                 output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
-                #if worker: 
-                #    worker.join()
-                #worker = Thread(target=self.camera.capture_image, args=(filename, download, hdri))
-                #worker.start()
                 print "Moving rig for next %s" % hstep
                 print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
-                #worker.join()
-                self.rig.rotate('y', hstep*direction)
-                #worker.join()
+                #self.rig.rotate('y', hstep*direction)
             direction *= -1
             self.rig.rotate('x', vstep)
         
