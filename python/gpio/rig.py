@@ -214,6 +214,13 @@ class Rig(object):
                     if counter == limit:
                         return
 
+        nowiso = datetime.datetime.now().replace(microsecond=0).isoformat()
+        self.log['events'] += [{'y': axes['y'], 'x': axes['x'], 'zoom': axes['zoom'],  'date': nowiso}]
+        self.log['state']['y']    += axes['y']
+        self.log['state']['x']    += axes['x']
+        self.log['state']['zoom'] += axes['zoom']
+        self._update_log()
+
 
 
     def rotate(self, axe, angle):
