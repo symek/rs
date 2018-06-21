@@ -66,7 +66,7 @@ class Curve(object):
         """
         from numpy import polyfit, polyval
         if not curve:        
-            curve = CurveEnum.HAND_MADE_EASY_OUT
+            curve = CurveEnum.HAND_MADE_EASY_OUT_FAST_START
         X  = [x[0] for x in curve]
         Y  = [y[1] for y in curve]
         step = 1.0/range_
