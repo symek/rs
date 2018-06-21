@@ -124,24 +124,32 @@ class Rig(object):
             json.dump(self.log, file, indent=4)
             return True
 
+    def _compute_ticks2(self, range_):
+        from curves import Curve
+        curve = Curve(range_)
+        ticks_final = [RS_MIN_SPEED + int(div*x) for x in curve.poly(range_)]
+        return ticks_final
+
+
     def _compute_ticks(self, range_, easing='c'):
         """ Computes varible ticks to control serve in head.
             Sleep has to be small and constant, because timer
             isn't good enough to give us control. 
         """
-        import utility
+        from curves import Curve
 
         fixodd = False
         if range_%4:
             fixodd = True
 
+        curve = Curve(range_)
         # Dirty I know
         if easing == 'q':
-            f = utility.easeInOutQuad
+            f = curve.easeInOutQuad
         elif easing == 'c':
-            f = utility.easeInOutCubic
+            f = curve.easeInOutCubic
         elif easing == 's':
-            f = utility.easeInOutSine
+            f = curve.easeInOutSine
         else:
             print "Unknown easing functin."
             return [RS_MIN_SPEED] * range_
@@ -164,8 +172,6 @@ class Rig(object):
         """ Interleaves ticks for all axes into a single list, so camera can rotate in
             all directions at once. Ugly.
         """
-        signs = []
-        #axes = {'x':angle}
         axes['x'] *= -1
         for axe in axes:
             if axes[axe] < 0:
@@ -173,13 +179,12 @@ class Rig(object):
             else:
                 GPIO.output(self.axis[axe][1].number, GPIO.LOW)
 
-
         ticks = []
         for axe in axes:
             if axes[axe]:
                 _range = self.angle * abs(axes[axe])
                 _range = _range + self.angle*abs(axes[axe])*.007333333
-                _ticks = [(self.axis[axe][0].number, tick) for tick in self._compute_ticks(int(_range))]
+                _ticks = [(self.axis[axe][0].number, tick) for tick in self._compute_ticks2(int(_range))]
                 ticks.append(_ticks)
             else:
                 ticks.append([])
