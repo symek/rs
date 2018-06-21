@@ -61,10 +61,11 @@ class Panoramic(object):
                 tmp = error
                 zoom_level = zoom
 
+        margin  = 1.0 - self.overlap
         fov  = self.focals[zoom_level]['fov']
         fovv = self.focals[zoom_level]['fov'] * self.aspect_ratio
-        colums = int(ceil(float(hangle) / (fov  * self.overlap)))
-        rows   = int(ceil(float(vangle) / (fovv * self.overlap)))
+        colums = int(ceil(float(hangle) / (fov  *  margin)))
+        rows   = int(ceil(float(vangle) / (fovv *  margin)))
         
         if verbose:
             print "\tclosest match: " + str(fov)
@@ -72,13 +73,13 @@ class Panoramic(object):
             print "\tcolums %s, rows: %s (including %s overlap)" % (colums, rows, self.overlap)
 
          # Compute rig movements:
-        hstep, vstep = (fov * self.overlap, -fovv * self.overlap)
+        hstep, vstep = (fov * margin, -fovv * margin)
         y_start_pos, x_start_pos = (0, 0)
         if self.pano_start_at == self.PANO_CENTER:
             y_start_pos, x_start_pos = (-float(hangle)/2, -float(vangle)/2)
         elif self.pano_start_at == self.PANO_RIGHT:
             y_start_pos, x_start_pos = (float(hangle)/2, float(vangle)/2)
-            hstep, vstep             = (-fov * self.overlap, -fovv * self.overlap)
+            hstep, vstep             = (-fov *margin, -fovv * margin)
 
         zoom_degrees = float(zoom_level) - self.rig.log['state']['zoom']
         new_zoom = self.rig.log['state']['zoom']
