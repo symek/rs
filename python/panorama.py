@@ -149,40 +149,41 @@ class Panoramic(object):
     def make_panorama(self, filename, details=None, download=False, hdri=False):
         """ Perform pan capture based on previously computed details.
         """
-        def misc(cols, rows, col, row, filename, log ):
-            pass
+        def run(hstep, vstep, cols, rows, col, row, 
+                filename, log, download, hdri, verbose=True):
+            """
+            """
+            from os.path import splitext
+            file, ext = splitext(filename)
+            image_number = row*cols+col
+            filename = file + "_part_" + str(image_number) + ext
 
-        from os.path import splitext
+            if verbose:
+                print "Making panorama image row: %s, col: %s(%s out of %s): %s" \
+                        % (row, col, image_number, rows*cols, filename)
+
+            output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
+
+            if verbose:
+                print "Moving rig for next %s" % hstep
+                print "Rig Y at %s, X at %s" % (log['state']['y'], log['state']['x'])
 
         if not details:
             details = self.pano_details
             
-        file, ext = splitext(filename)
         hstep     = details['hstep']
         vstep     = details['vstep']
         direction = 1
         rows = details['rows']
         cols = details['colums']
         _col = 0 
+
         for row in range(rows):
-            image_number = row*details['colums']+_col
-            filename = file + "_part_" + str(image_number) + ext
-            print "Making panorama image row:%s, col: %s(%s out of %s): %s" \
-                    % (row, _col, image_number, rows*cols, filename)
-            output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
-            print "Moving rig for next %s" % hstep
-            print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
+            run(hstep, vstep, _cols, rows, col, row, filename, self.rig.log, download, hdri, True)
             for col in range(cols-1):
                 _col = col
+                run(hstep, vstep, _cols, rows, col, row, filename, self.rig.log, download, hdri, True)
                 self.rig.rotate('y', hstep*direction)
-                image_number = row*details['colums']+col
-                filename = file + "_part_" + str(image_number) + ext
-                print "Making panorama image row:%s, col: %s(%s out of %s): %s" \
-                        % (row, col, image_number, rows*cols, filename)
-                output, error = self.camera.capture_image(filename, download=download, hdri=hdri)
-                print "Moving rig for next %s" % hstep
-                print "Rig Y at %s, X at %s" % (self.rig.log['state']['y'], self.rig.log['state']['x'])
-                #self.rig.rotate('y', hstep*direction)
             direction *= -1
             self.rig.rotate('x', vstep)
         
